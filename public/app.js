@@ -588,10 +588,10 @@
     }
 
     const qualities = [
-      { id: 'maxres', label: 'Max Resolution', res: '4320p / 4K', url: `https://i.ytimg.com/vi/${state.videoId}/maxresdefault.jpg` },
-      { id: 'hqdefault', label: 'High Quality', res: '480p', url: `https://i.ytimg.com/vi/${state.videoId}/hqdefault.jpg` },
-      { id: 'mqdefault', label: 'Medium Quality', res: '320p', url: `https://i.ytimg.com/vi/${state.videoId}/mqdefault.jpg` },
-      { id: 'default', label: 'Standard', res: '120p', url: `https://i.ytimg.com/vi/${state.videoId}/default.jpg` },
+      { id: 'maxres', label: 'Max Resolution', res: '1920×1080', url: `https://i.ytimg.com/vi/${state.videoId}/maxresdefault.jpg` },
+      { id: 'hqdefault', label: 'High Quality', res: '480×360', url: `https://i.ytimg.com/vi/${state.videoId}/hqdefault.jpg` },
+      { id: 'mqdefault', label: 'Medium Quality', res: '320×180', url: `https://i.ytimg.com/vi/${state.videoId}/mqdefault.jpg` },
+      { id: 'default', label: 'Standard', res: '120×90', url: `https://i.ytimg.com/vi/${state.videoId}/default.jpg` },
     ];
 
     // Try the highest quality first, fallback to what we have
@@ -643,65 +643,26 @@
     if (!selectedOpt) return;
 
     const url = selectedOpt.dataset.url;
-    const quality = selectedOpt.dataset.quality;
     const title = state.videoInfo?.title || 'thumbnail';
     const safeTitle = title.replace(/[<>:"/\\|?*]/g, '_').slice(0, 80);
 
-    state.isDownloading = true;
-    hide(el.errorCard);
-    show(el.progressCard);
-    el.downloadBtn.style.display = 'none';
-    el.newDownloadBtn.style.display = 'none';
-    el.progressTitle.textContent = 'Downloading thumbnail';
-    el.progressBar.style.width = '0%';
-    el.progressStatus.textContent = '0%';
-    el.progressSpeed.textContent = '—';
-    el.progressEta.textContent = '—';
-    el.progressSize.textContent = '—';
-
+    // Direct browser download — no progress bar, no server roundtrip
     try {
-      const response = await fetch('/api/thumbnail', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, title: safeTitle, quality }),
-      });
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Thumbnail download failed');
-      }
-
-      const { downloadId } = await response.json();
-      state.downloadId = downloadId;
-
-      // For thumbnail, we use a simplified progress listener
-      const evtSource = new EventSource(`/api/progress/${downloadId}`);
-      evtSource.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.status === 'completed') {
-            evtSource.close();
-            el.progressBar.style.width = '100%';
-            el.progressStatus.textContent = '100%';
-            el.progressTitle.textContent = 'Thumbnail ready';
-            el.downloadBtn.style.display = '';
-            el.newDownloadBtn.style.display = '';
-            el.newDownloadBtn.querySelector('.btn-label').textContent = 'New Download';
-            state.isDownloading = false;
-          } else if (data.status === 'failed') {
-            evtSource.close();
-            showError(data.error || 'Thumbnail download failed.');
-            state.isDownloading = false;
-          }
-        } catch {}
-      };
-      evtSource.onerror = () => {
-        evtSource.close();
-      };
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${safeTitle}_thumbnail.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
     } catch (err) {
       console.error('Thumbnail download error:', err);
-      showError(err.message || 'Failed to download thumbnail.');
-      state.isDownloading = false;
+      showError('Failed to download thumbnail: ' + (err.message || 'Unknown error'));
     }
   }
 

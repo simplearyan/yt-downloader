@@ -213,6 +213,10 @@ body {
 }
 
 /* ── URL Input Card ────────────────────────────────── */
+.url-card {
+  overflow: visible;
+}
+
 .url-card .card-content {
   padding: 16px 24px;
 }
