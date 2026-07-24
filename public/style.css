@@ -176,6 +176,17 @@ body {
 
 .app-bar .icon-btn.active-toggle {
   color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.app-bar-end {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-bar-end .icon-btn .material-symbols-outlined {
+  font-size: 20px;
 }
 
 /* ── Main ──────────────────────────────────────────── */
