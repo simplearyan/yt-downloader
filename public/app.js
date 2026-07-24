@@ -682,6 +682,10 @@
       desc = fmt.hasVideo
         ? 'Highest quality video with audio'
         : 'Best quality audio as MP3';
+      if (fmt.filesize) {
+        const sizeMB = (fmt.filesize / 1024 / 1024).toFixed(1);
+        desc += ` · ~${sizeMB}MB`;
+      }
     } else if (fmt.hasVideo && fmt.hasAudio) {
       name = `${fmt.quality} ${fmt.vcodec !== 'none' ? fmt.vcodec.split('.')[0].toUpperCase() : 'Video'}`;
       desc = `${fmt.ext.toUpperCase()} · ${fmt.fps > 0 ? `${fmt.fps}fps · ` : ''}${fmt.acodec !== 'none' ? 'With audio' : 'No audio'}`;

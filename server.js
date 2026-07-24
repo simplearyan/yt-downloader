@@ -147,6 +147,20 @@ app.get('/api/info', async (req, res) => {
       })
       .filter((f) => f.hasVideo || f.hasAudio);
 
+    // Estimate file sizes for recommended options from individual format data
+    // Sort video formats by resolution (height), pick the largest
+    const videoFormats = formats.filter((f) => f.hasVideo && !f.hasAudio);
+    const audioFormats = formats.filter((f) => f.hasAudio && !f.hasVideo);
+
+    // Largest video-only format size (any codec)
+    const bestVideoSize = videoFormats.reduce((max, f) => Math.max(max, f.filesize || 0), 0);
+    // Largest H.264 video-only format size
+    const bestH264VideoSize = videoFormats
+      .filter((f) => f.codecCategory === 'H.264')
+      .reduce((max, f) => Math.max(max, f.filesize || 0), 0);
+    // Largest audio-only format size
+    const bestAudioSize = audioFormats.reduce((max, f) => Math.max(max, f.filesize || 0), 0);
+
     // Add convenience options at the top
     const bestOptions = [
       {
@@ -155,6 +169,7 @@ app.get('/api/info', async (req, res) => {
         ext: 'mp4',
         quality: 'Best',
         codecCategory: '',
+        filesize: bestVideoSize + bestAudioSize,
         hasVideo: true,
         hasAudio: true,
         isBest: true,
@@ -165,6 +180,7 @@ app.get('/api/info', async (req, res) => {
         ext: 'mp4',
         quality: 'H.264',
         codecCategory: 'H.264',
+        filesize: bestH264VideoSize + bestAudioSize,
         hasVideo: true,
         hasAudio: true,
         isBest: true,
@@ -175,6 +191,7 @@ app.get('/api/info', async (req, res) => {
         ext: 'mp3',
         quality: 'Best',
         codecCategory: '',
+        filesize: bestAudioSize,
         hasVideo: false,
         hasAudio: true,
         isBest: true,
