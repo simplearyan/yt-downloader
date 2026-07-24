@@ -432,6 +432,56 @@ app.get('/api/download/:id', (req, res) => {
   res.status(404).json({ error: 'File not found. It may have expired.' });
 });
 
+/** POST /api/thumbnail — download a thumbnail image from a URL */
+app.post('/api/thumbnail', async (req, res) => {
+  const { url, title, quality } = req.body || {};
+  if (!url) {
+    return res.status(400).json({ error: 'No thumbnail URL provided.' });
+  }
+
+  const downloadId = crypto.randomUUID();
+  const safeTitle = sanitizeFilename(title || 'thumbnail');
+  const qualityStr = quality || 'default';
+  const ext = 'jpg';
+  const outputPath = path.join(DOWNLOADS_DIR, `${downloadId}_${safeTitle}_${qualityStr}.${ext}`);
+
+  const downloadState = {
+    id: downloadId,
+    outputPath,
+    progress: 0,
+    speed: '',
+    eta: '',
+    totalSize: '',
+    status: 'downloading',
+    error: null,
+    createdAt: Date.now(),
+  };
+
+  activeDownloads.set(downloadId, downloadState);
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    fs.writeFileSync(outputPath, buffer);
+
+    downloadState.status = 'completed';
+    downloadState.progress = 100;
+    downloadState.totalSize = `${(buffer.length / 1024).toFixed(1)}KB`;
+  } catch (err) {
+    downloadState.status = 'failed';
+    downloadState.error = err.message;
+  }
+
+  // Clean up after delay
+  setTimeout(() => {
+    activeDownloads.delete(downloadId);
+  }, 5 * 60 * 1000);
+
+  res.json({ downloadId });
+});
+
 // ── Serve SPA (catch-all) ──────────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

@@ -40,7 +40,7 @@
         <!-- URL Input Card -->
         <section class="card url-card" id="urlCard">
           <div class="card-content">
-            <div class="input-wrapper">
+            <div class="input-wrapper input-wrapper-with-dropdown">
               <span class="material-symbols-outlined input-icon">link</span>
               <input
                 type="url"
@@ -54,6 +54,7 @@
                 <span class="material-symbols-outlined">search</span>
                 <span class="btn-label">Get Info</span>
               </button>
+              <div class="search-history" id="searchHistory"></div>
             </div>
             <p class="input-hint">Supports youtube.com &middot; youtu.be &middot; shorts &middot; playlists</p>
           </div>
@@ -110,13 +111,14 @@
           </div>
         </section>
 
-        <!-- Format Selection Card -->
-        <section class="card format-card" id="formatCard" style="display:none">
+        <!-- Format Selection Card -->          <section class="card format-card" id="formatCard" style="display:none">
           <div class="format-tabs" id="formatTabs">
             <button class="format-tab active" data-tab="recommended">Recommended</button>
             <button class="format-tab" data-tab="video">Video</button>
             <button class="format-tab" data-tab="audio">Audio</button>
+            <button class="format-tab" data-tab="thumbnail">Thumbnail</button>
           </div>
+          <div class="codec-sub-tabs" id="codecSubTabs" style="display:none"></div>
           <div class="card-content format-options" id="formatOptions">
             <!-- Dynamically populated -->
           </div>

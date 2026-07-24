@@ -530,6 +530,227 @@ body {
   font-weight: 500;
 }
 
+/* ── Search History Dropdown ──────────────────────── */
+.input-wrapper-with-dropdown {
+  position: relative;
+}
+
+.search-history {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--elevation-2);
+  max-height: 280px;
+  overflow-y: auto;
+  display: none;
+  z-index: 50;
+}
+
+.search-history.visible {
+  display: block;
+}
+
+.search-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-outline-variant);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.search-history-clear {
+  background: none;
+  border: none;
+  color: var(--color-on-surface-variant);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color var(--transition), background var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.search-history-clear:hover {
+  color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+
+.search-history-empty {
+  padding: 16px 12px;
+  font-size: 12px;
+  color: var(--color-outline);
+  text-align: center;
+}
+
+.search-history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.search-history-item:hover {
+  background: var(--color-surface-container-high);
+}
+
+.search-history-item .history-thumb {
+  width: 36px;
+  height: 27px;
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--color-surface-variant);
+}
+
+.search-history-item .history-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.search-history-item .history-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-history-item .history-ext {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+  flex-shrink: 0;
+}
+
+.search-history-item .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--color-outline);
+}
+
+/* ── Codec Sub-Tabs ───────────────────────────────── */
+.codec-sub-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0px 24px 10px;
+  flex-wrap: wrap;
+}
+
+.codec-sub-tab {
+  background: none;
+  border: 1px solid var(--color-outline-variant);
+  padding: 4px 12px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.codec-sub-tab:hover {
+  color: var(--color-on-surface);
+  border-color: var(--color-outline);
+}
+
+.codec-sub-tab.active {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* ── Thumbnail Tab ────────────────────────────────── */
+.thumbnail-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.thumbnail-preview {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--color-surface-container-highest);
+  box-shadow: var(--elevation-1);
+}
+
+.thumbnail-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbnail-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+}
+
+.thumbnail-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--color-surface-container-high);
+  border: 2px solid transparent;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-on-surface);
+}
+
+.thumbnail-option:hover {
+  background: var(--color-surface-container-highest);
+}
+
+.thumbnail-option.selected {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary-container) 20%, var(--color-surface-container-high));
+}
+
+.thumbnail-resolution {
+  font-size: 10px;
+  color: var(--color-on-surface-variant);
+}
+
+.thumbnail-download-btn {
+  margin-top: 4px;
+  width: 100%;
+  max-width: 480px;
+  justify-content: center;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* ── Progress Card ────────────────────────────────── */
 .progress-header {
   display: flex;
@@ -853,6 +1074,30 @@ body {
   .progress-details {
     flex-direction: column;
     gap: 4px;
+  }
+
+  .search-history {
+    max-height: 200px;
+    margin-top: 2px;
+  }
+
+  .codec-sub-tabs {
+    padding: 8px 16px 0;
+    gap: 4px;
+  }
+
+  .codec-sub-tab {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .thumbnail-preview {
+    max-width: 100%;
+  }
+
+  .thumbnail-options {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
