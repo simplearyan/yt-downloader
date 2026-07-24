@@ -9,10 +9,12 @@
   let state = {
     url: '',
     videoInfo: null,
+    allFormats: [],
     selectedFormatId: null,
     downloadId: null,
     isDownloading: false,
     isFetching: false,
+    activeTab: 'recommended',
   };
 
   // ── DOM References ──────────────────────────────────
@@ -30,6 +32,7 @@
     videoUploader: $('#videoUploader'),
     videoMeta: $('#videoMeta'),
     formatCard: $('#formatCard'),
+    formatTabs: $('#formatTabs'),
     formatOptions: $('#formatOptions'),
     progressCard: $('#progressCard'),
     progressTitle: $('#progressTitle'),
@@ -66,7 +69,6 @@
     applyTheme(current === 'dark' ? 'light' : 'dark');
   }
 
-  // Init theme
   applyTheme(getPreferredTheme());
   el.themeToggle.addEventListener('click', toggleTheme);
 
@@ -99,24 +101,14 @@
     return n.toLocaleString();
   }
 
-  function formatSize(str) {
-    return str || '—';
-  }
-
   function showError(message) {
     el.errorMessage.textContent = message;
-    hide(el.loadingCard, el.videoCard, el.formatCard, el.progressCard);
+    hide(el.loadingCard, el.progressCard);
     show(el.errorCard);
   }
 
   function resetUI() {
-    hide(
-      el.loadingCard,
-      el.videoCard,
-      el.formatCard,
-      el.progressCard,
-      el.errorCard
-    );
+    hide(el.loadingCard, el.formatCard, el.progressCard, el.errorCard);
     el.progressBar.style.width = '0%';
     el.progressStatus.textContent = '0%';
     el.downloadBtn.style.display = 'none';
@@ -137,16 +129,29 @@
     }
   });
 
-  // Auto-paste removed — users paste manually to avoid clipboard permission prompt
-
   el.fetchBtn.addEventListener('click', () => {
     if (!state.isFetching) fetchVideoInfo();
   });
   el.retryBtn.addEventListener('click', fetchVideoInfo);
   el.newDownloadBtn.addEventListener('click', () => {
     resetUI();
-    show(el.urlCard, el.videoCard, el.formatCard);
+    show(el.urlCard);
     el.urlInput.focus();
+    state.url = '';
+    el.fetchBtn.disabled = true;
+  });
+
+  // ── Format Tabs ─────────────────────────────────────
+  el.formatTabs.addEventListener('click', (e) => {
+    const tab = e.target.closest('.format-tab');
+    if (!tab) return;
+    const tabName = tab.dataset.tab;
+    if (!tabName || tabName === state.activeTab) return;
+
+    el.formatTabs.querySelectorAll('.format-tab').forEach((t) => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.activeTab = tabName;
+    renderCurrentTab();
   });
 
   // ── Fetch Video Info ────────────────────────────────
@@ -170,8 +175,22 @@
       const info = await response.json();
       state.videoInfo = info;
 
+      // Categorize formats
+      const formats = info.formats || [];
+      state.allFormats = {
+        recommended: info.bestOptions || [],
+        video: formats.filter((f) => f.hasVideo && !f.hasAudio),
+        audio: formats.filter((f) => f.hasAudio && !f.hasVideo),
+      };
+
       renderVideoInfo(info);
-      renderFormats(info);
+      // Reset to recommended tab
+      state.activeTab = 'recommended';
+      el.formatTabs.querySelectorAll('.format-tab').forEach((t) => {
+        t.classList.toggle('active', t.dataset.tab === 'recommended');
+      });
+      renderCurrentTab();
+
       hide(el.loadingCard);
       show(el.videoCard, el.formatCard);
     } catch (err) {
@@ -198,31 +217,21 @@
       .join(' · ');
   }
 
-  // ── Render Formats ──────────────────────────────────
-  function renderFormats(info) {
+  // ── Render Current Tab ──────────────────────────────
+  function renderCurrentTab() {
     el.formatOptions.innerHTML = '';
 
-    // Best options first
-    if (info.bestOptions) {
-      info.bestOptions.forEach((opt) => {
-        const option = createFormatOption(opt);
-        el.formatOptions.appendChild(option);
-      });
-
-      // Separator
-      const separator = document.createElement('div');
-      separator.style.cssText =
-        'height:1px;background:var(--color-outline-variant);margin:4px 0;';
-      el.formatOptions.appendChild(separator);
+    const formats = state.allFormats[state.activeTab] || [];
+    if (formats.length === 0) {
+      el.formatOptions.innerHTML =
+        '<p style="color:var(--color-on-surface-variant);font-size:13px;padding:8px 0;text-align:center">No formats available in this category.</p>';
+      return;
     }
 
-    // Individual formats
-    if (info.formats && info.formats.length > 0) {
-      info.formats.forEach((fmt) => {
-        const option = createFormatOption(fmt);
-        el.formatOptions.appendChild(option);
-      });
-    }
+    formats.forEach((fmt) => {
+      const option = createFormatOption(fmt);
+      el.formatOptions.appendChild(option);
+    });
 
     // Select first option by default
     const firstRadio = el.formatOptions.querySelector('.format-option');
@@ -250,15 +259,13 @@
     div.dataset.title = fmt.title || state.videoInfo?.title || 'video';
     div.dataset.isBest = fmt.isBest ? 'true' : 'false';
 
-    // Determine label
     let name = fmt.label || '';
     let desc = '';
 
     if (fmt.isBest) {
-      // Best options already have nice labels
       name = fmt.label || (fmt.hasVideo ? 'Best Video + Audio' : 'Best Audio Only');
       desc = fmt.hasVideo
-        ? 'Highest quality video with audio (recommended)'
+        ? 'Highest quality video with audio'
         : 'Best quality audio as MP3';
     } else if (fmt.hasVideo && fmt.hasAudio) {
       name = `${fmt.quality} ${fmt.vcodec !== 'none' ? fmt.vcodec.split('.')[0].toUpperCase() : 'Video'}`;
@@ -311,11 +318,12 @@
     const ext = selectedOption?.dataset?.ext || 'mp4';
 
     state.isDownloading = true;
-    hide(el.videoCard, el.formatCard, el.errorCard);
+    // Keep videoCard and formatCard visible — don't hide them
+    hide(el.errorCard);
     show(el.progressCard);
     el.downloadBtn.style.display = 'none';
     el.newDownloadBtn.style.display = 'none';
-    el.progressTitle.textContent = 'Downloading…';
+    el.progressTitle.textContent = 'Downloading';
     el.progressBar.style.width = '0%';
     el.progressStatus.textContent = '0%';
     el.progressSpeed.textContent = '—';
@@ -342,7 +350,6 @@
       const { downloadId } = await response.json();
       state.downloadId = downloadId;
 
-      // Start listening to progress via SSE
       listenToProgress(downloadId);
     } catch (err) {
       console.error('Download start error:', err);
@@ -364,7 +371,7 @@
         el.progressTitle.textContent = 'Connection lost';
         el.progressStatus.textContent = '?';
         el.newDownloadBtn.style.display = '';
-        el.newDownloadBtn.querySelector('.btn-label').textContent = 'Check your server';
+        el.newDownloadBtn.querySelector('.btn-label').textContent = 'New Download';
         state.isDownloading = false;
       }
     }
@@ -378,7 +385,7 @@
       if (status === 'completed') {
         el.progressBar.style.width = '100%';
         el.progressStatus.textContent = '100%';
-        el.progressTitle.textContent = 'Download complete!';
+        el.progressTitle.textContent = 'Download complete';
         el.downloadBtn.style.display = '';
         el.newDownloadBtn.style.display = '';
         el.newDownloadBtn.querySelector('.btn-label').textContent = 'New Download';
@@ -389,7 +396,6 @@
     }
 
     evtSource.onmessage = (e) => {
-      // Reset the inactivity timeout on every update
       clearTimeout(sseTimeout);
       sseTimeout = setTimeout(handleTimeout, 30000);
 
@@ -401,11 +407,11 @@
           const pct = Math.round(data.progress || 0);
           el.progressBar.style.width = `${pct}%`;
           el.progressStatus.textContent = `${pct}%`;
-          el.progressSpeed.textContent = data.speed ? `Speed: ${data.speed}` : '—';
-          el.progressEta.textContent = data.eta ? `ETA: ${data.eta}` : '—';
-          el.progressSize.textContent = data.totalSize ? `Size: ${data.totalSize}` : '—';
+          el.progressSpeed.textContent = data.speed ? data.speed : '—';
+          el.progressEta.textContent = data.eta ? data.eta : '—';
+          el.progressSize.textContent = data.totalSize ? data.totalSize : '—';
           if (data.status === 'processing') {
-            el.progressTitle.textContent = 'Processing…';
+            el.progressTitle.textContent = 'Processing';
           }
         } else if (data.status === 'completed') {
           finish('completed');
@@ -421,7 +427,6 @@
 
     evtSource.onerror = () => {
       if (isDone) return;
-      // Reset timeout on error too — Firefox fires onerror during reconnect
       clearTimeout(sseTimeout);
       sseTimeout = setTimeout(handleTimeout, 30000);
     };

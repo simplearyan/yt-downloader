@@ -27,7 +27,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 function sanitizeUrl(url) {
   try {
     const u = new URL(url);
-    // Remove known tracking/analytics parameters
     const trackingParams = ['si', 'feature', 'pp', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
     trackingParams.forEach(p => u.searchParams.delete(p));
     return u.toString();
@@ -39,7 +38,6 @@ function sanitizeUrl(url) {
 /** Validate that a string looks like a YouTube URL */
 function isValidYouTubeUrl(url) {
   if (!url || typeof url !== 'string') return false;
-  // Allow optional tracking params after the video ID (no $ anchor)
   const patterns = [
     /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]{11}/,
     /^https?:\/\/(www\.)?youtube\.com\/embed\/[\w-]{11}/,
@@ -193,11 +191,17 @@ app.post('/api/download', (req, res) => {
   const safeTitle = sanitizeFilename(title || 'video');
   const outputTemplate = path.join(DOWNLOADS_DIR, `${downloadId}_%(title).100s.%(ext)s`);
 
+  // Progress template outputs JSON to stdout for real-time progress
+  // On Windows, stderr is fully buffered when piped, so we must use stdout
+  const progressTemplate =
+    'stdout:{"p":"%(progress._percent_str)s","s":"%(progress._speed_str)s","e":"%(progress._eta_str)s","t":"%(progress._total_bytes_str)s"}';
+
   const args = [
     '--no-playlist',
     '--newline',
     '--progress',
     '--no-warnings',
+    '--progress-template', progressTemplate,
     '-f', formatId,
     '-o', outputTemplate,
     '--merge-output-format', ext === 'mp3' ? 'mp3' : 'mp4',
@@ -222,8 +226,7 @@ app.post('/api/download', (req, res) => {
     progress: 0,
     speed: '',
     eta: '',
-    totalSize: 0,
-    downloadedSize: 0,
+    totalSize: '',
     status: 'downloading',
     error: null,
     createdAt: Date.now(),
@@ -231,42 +234,66 @@ app.post('/api/download', (req, res) => {
 
   activeDownloads.set(downloadId, downloadState);
 
-  // Parse progress lines from yt-dlp stderr
-  proc.stderr.on('data', (chunk) => {
-    const line = chunk.toString().trim();
-    if (!line) return;
+  // Parse real-time progress from stdout JSON lines
+  // The --progress-template outputs lines like: stdout:{"p":" 45.2%","s":" 2.3MiB/s","e":"00:12","t":" 50.23MiB"}
+  let stdoutBuf = '';
+  proc.stdout.on('data', (chunk) => {
+    const text = chunk.toString();
+    stdoutBuf += text;
 
-    // yt-dlp progress format: [download]  45.2% of ~50.23MiB at  2.3MiB/s ETA 00:12
-    const progressMatch = line.match(
-      /\[download\]\s+([\d.]+)%\s+of\s+~?([\d.]+[KMGTP]?i?B)\s+at\s+([\d.]+[KMGTP]?i?B\/s)\s+ETA\s+([\w:]+)/
-    );
-    if (progressMatch) {
-      downloadState.progress = parseFloat(progressMatch[1]);
-      downloadState.totalSize = progressMatch[2];
-      downloadState.speed = progressMatch[3];
-      downloadState.eta = progressMatch[4];
-    }
+    // Split by newline and process complete lines
+    const lines = stdoutBuf.split('\n');
+    stdoutBuf = lines.pop(); // keep incomplete line in buffer
 
-    // yt-dlp final line: [download] 100% of 50.23MiB
-    const completedMatch = line.match(/\[download\]\s+100%/);
-    if (completedMatch) {
-      downloadState.progress = 100;
-      downloadState.status = 'processing';
-    }
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
 
-    // Success: [Merger] or "has already been downloaded"
-    const successMatch = line.match(/\[(Merger|Metadata|EmbedSubtitle|ffmpeg|ExtractAudio)\]/);
-    if (successMatch && downloadState.progress >= 100) {
-      downloadState.status = 'processing';
+      // Progress JSON lines start with "stdout:{..."
+      if (line.startsWith('stdout:{') && line.endsWith('}')) {
+        try {
+          const jsonStr = line.slice(7); // strip "stdout:" prefix
+          const data = JSON.parse(jsonStr);
+
+          // Parse percent (e.g., " 45.2%" -> 45.2)
+          if (data.p && data.p !== 'NA') {
+            const pct = parseFloat(data.p.replace('%', '').trim());
+            if (!isNaN(pct)) downloadState.progress = pct;
+          }
+
+          // Speed (e.g., " 2.3MiB/s")
+          if (data.s && data.s !== 'NA') {
+            downloadState.speed = data.s.trim();
+          }
+
+          // ETA (e.g., "00:12")
+          if (data.e && data.e !== 'NA') {
+            downloadState.eta = data.e.trim();
+          }
+
+          // Total size (e.g., " 50.23MiB")
+          if (data.t && data.t !== 'NA') {
+            downloadState.totalSize = data.t.trim();
+          }
+
+          // When progress hits 100%, mark as processing
+          if (downloadState.progress >= 100) {
+            downloadState.status = 'processing';
+          }
+        } catch {
+          // skip malformed JSON lines
+        }
+      } else if (line && !line.startsWith('[') && !line.startsWith('stdout:') && fs.existsSync(line)) {
+        // yt-dlp outputs the final filename on stdout (non-JSON, non-bracket lines)
+        downloadState.outputPath = line;
+      }
     }
   });
 
-  proc.stdout.on('data', (chunk) => {
-    const line = chunk.toString().trim();
-    // yt-dlp outputs the final filename on stdout
-    if (line && !line.startsWith('[') && fs.existsSync(line)) {
-      downloadState.outputPath = line;
-    }
+  // Log stderr for debugging (progress goes to stdout now)
+  proc.stderr.on('data', (chunk) => {
+    const text = chunk.toString().trim();
+    if (text) console.log('yt-dlp:', text.split('\n').pop());
   });
 
   proc.on('close', (code) => {
