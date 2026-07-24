@@ -93,9 +93,9 @@
               <div class="progress-bar" id="progressBar" style="width:0%"></div>
             </div>
             <div class="progress-details">
-              <span id="progressSpeed">0MiB/s</span>
-              <span id="progressEta">00:00</span>
-              <span id="progressSize">00.00Kib</span>
+              <span id="progressSpeed">&mdash;</span>
+              <span id="progressEta">&mdash;</span>
+              <span id="progressSize">&mdash;</span>
             </div>
             <div class="progress-actions">
               <button class="btn btn-primary" id="downloadBtn" style="display:none">
@@ -112,16 +112,27 @@
 
         <!-- Format Selection Card -->
         <section class="card format-card" id="formatCard" style="display:none">
-       <!--<div class="card-header">
-            <h3 class="card-title">Format</h3>
-          </div> -->
-          <!-- Format Tabs -->
           <div class="format-tabs" id="formatTabs">
             <button class="format-tab active" data-tab="recommended">Recommended</button>
             <button class="format-tab" data-tab="video">Video</button>
             <button class="format-tab" data-tab="audio">Audio</button>
           </div>
           <div class="card-content format-options" id="formatOptions">
+            <!-- Dynamically populated -->
+          </div>
+        </section>
+
+        <!-- History Card -->
+        <section class="card history-card" id="historyCard" style="display:none">
+          <div class="card-header">
+            <div class="history-header">
+              <h3 class="card-title">History</h3>
+              <button id="clearHistoryBtn" class="btn btn-text" title="Clear history">
+                <span class="material-symbols-outlined">delete_sweep</span>
+              </button>
+            </div>
+          </div>
+          <div class="card-content history-items" id="historyItems">
             <!-- Dynamically populated -->
           </div>
         </section>

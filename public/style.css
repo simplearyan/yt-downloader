@@ -583,6 +583,130 @@ body {
   margin-top: 16px;
 }
 
+/* ── History Card ──────────────────────────────────── */
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--color-on-surface-variant);
+  padding: 6px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition), background var(--transition);
+}
+
+.btn-text:hover {
+  color: var(--color-on-surface);
+  background: var(--color-surface-container-high);
+}
+
+.btn-text .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.history-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-xs);
+  transition: background var(--transition);
+}
+
+.history-item:hover {
+  background: var(--color-surface-container-highest);
+}
+
+.history-thumb {
+  position: relative;
+  width: 48px;
+  height: 36px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--color-surface-variant);
+}
+
+.history-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.history-ext {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  font-size: 8px;
+  font-weight: 700;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  padding: 0 3px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.history-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-meta {
+  font-size: 11px;
+  color: var(--color-on-surface-variant);
+  margin-top: 1px;
+}
+
+.history-reuse {
+  background: none;
+  border: none;
+  color: var(--color-on-surface-variant);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--transition), background var(--transition);
+}
+
+.history-reuse:hover {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary-container) 30%, transparent);
+}
+
+.history-reuse .material-symbols-outlined {
+  font-size: 16px;
+}
+
 /* ── Error Card ────────────────────────────────────── */
 .error-content {
   display: flex;

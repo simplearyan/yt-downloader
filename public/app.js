@@ -46,6 +46,9 @@
     errorCard: $('#errorCard'),
     errorMessage: $('#errorMessage'),
     retryBtn: $('#retryBtn'),
+    historyCard: $('#historyCard'),
+    historyItems: $('#historyItems'),
+    clearHistoryBtn: $('#clearHistoryBtn'),
   };
 
   // ── Theme ───────────────────────────────────────────
@@ -116,6 +119,103 @@
     state.downloadId = null;
     state.isDownloading = false;
   }
+
+  // ── History (localStorage) ──────────────────────────
+  const HISTORY_KEY = 'ytdl_history';
+
+  function getHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveHistory(history) {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch {}
+  }
+
+  function addToHistory(entry) {
+    const history = getHistory();
+    // Insert at the beginning, keep max 50 entries
+    history.unshift(entry);
+    if (history.length > 50) history.length = 50;
+    saveHistory(history);
+    renderHistory();
+  }
+
+  function clearHistory() {
+    saveHistory([]);
+    renderHistory();
+  }
+
+  function formatTimeAgo(dateStr) {
+    const now = Date.now();
+    const then = new Date(dateStr).getTime();
+    const diff = now - then;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  }
+
+  function renderHistory() {
+    const history = getHistory();
+    if (history.length === 0) {
+      el.historyCard.style.display = 'none';
+      return;
+    }
+
+    el.historyCard.style.display = '';
+    el.historyItems.innerHTML = '';
+
+    history.forEach((item) => {
+      const div = document.createElement('div');
+      div.className = 'history-item';
+
+      div.innerHTML = `
+        <div class="history-thumb">
+          <img src="${item.thumbnail || ''}" alt="" loading="lazy" />
+          <span class="history-ext">${item.ext || '?'}</span>
+        </div>
+        <div class="history-info">
+          <div class="history-title">${item.title || 'Unknown'}</div>
+          <div class="history-meta">${item.uploader || ''} &middot; ${formatTimeAgo(item.date)}</div>
+        </div>
+        <button class="history-reuse" data-url="${item.url || ''}" title="Download again">
+          <span class="material-symbols-outlined">refresh</span>
+        </button>
+      `;
+
+      // Click on the refresh button re-fetches the same URL
+      div.querySelector('.history-reuse').addEventListener('click', (e) => {
+        e.stopPropagation();
+        el.urlInput.value = item.url || '';
+        state.url = item.url || '';
+        el.fetchBtn.disabled = false;
+        el.urlInput.focus();
+        fetchVideoInfo();
+      });
+
+      el.historyItems.appendChild(div);
+    });
+  }
+
+  // Clear history button
+  el.clearHistoryBtn.addEventListener('click', () => {
+    if (confirm('Clear all download history?')) {
+      clearHistory();
+    }
+  });
+
+  // Load history on startup
+  renderHistory();
 
   // ── URL Input ───────────────────────────────────────
   el.urlInput.addEventListener('input', () => {
@@ -318,7 +418,6 @@
     const ext = selectedOption?.dataset?.ext || 'mp4';
 
     state.isDownloading = true;
-    // Keep videoCard and formatCard visible — don't hide them
     hide(el.errorCard);
     show(el.progressCard);
     el.downloadBtn.style.display = 'none';
@@ -389,6 +488,19 @@
         el.downloadBtn.style.display = '';
         el.newDownloadBtn.style.display = '';
         el.newDownloadBtn.querySelector('.btn-label').textContent = 'New Download';
+
+        // Save to history
+        if (state.videoInfo) {
+          addToHistory({
+            url: state.url,
+            title: state.videoInfo.title || 'Unknown',
+            thumbnail: state.videoInfo.thumbnail || '',
+            uploader: state.videoInfo.uploader || '',
+            duration: state.videoInfo.duration || 0,
+            ext: state.selectedFormatId?.includes('audio') ? 'mp3' : 'mp4',
+            date: new Date().toISOString(),
+          });
+        }
       } else if (status === 'failed' || status === 'expired') {
         showError(status === 'failed' ? (state.lastError || 'Download failed.') : 'Download session expired. Please try again.');
       }
