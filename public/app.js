@@ -6,6 +6,19 @@
   'use strict';
 
   // ── State ───────────────────────────────────────────
+  // Persisted preference keys
+  const PREF_AUTO_DOWNLOAD = 'ytdl_auto_download';
+  const PREF_FORMAT_TAB = 'ytdl_pref_tab';
+  const PREF_CODEC_FILTER = 'ytdl_pref_codec';
+  const PREF_THUMBNAIL_QUALITY = 'ytdl_pref_thumb';
+
+  function loadPref(key, fallback) {
+    try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback; } catch { return fallback; }
+  }
+  function savePref(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  }
+
   let state = {
     url: '',
     videoInfo: null,
@@ -14,9 +27,10 @@
     downloadId: null,
     isDownloading: false,
     isFetching: false,
-    activeTab: 'recommended',
-    activeCodecFilter: 'all',
-    selectedThumbnailQuality: 'maxres',
+    activeTab: loadPref(PREF_FORMAT_TAB, 'recommended'),
+    activeCodecFilter: loadPref(PREF_CODEC_FILTER, 'all'),
+    selectedThumbnailQuality: loadPref(PREF_THUMBNAIL_QUALITY, 'maxres'),
+    autoDownload: loadPref(PREF_AUTO_DOWNLOAD, false),
   };
 
   // ── DOM References ──────────────────────────────────
@@ -53,6 +67,7 @@
     clearHistoryBtn: $('#clearHistoryBtn'),
     searchHistory: $('#searchHistory'),
     codecSubTabs: $('#codecSubTabs'),
+    autoDownloadToggle: $('#autoDownloadToggle'),
   };
 
   // ── Theme ───────────────────────────────────────────
@@ -241,13 +256,21 @@
 
   function trackSearch(url) {
     const searches = getSearches();
-    // Remove duplicate if exists
     const existingIdx = searches.findIndex((s) => s.url === url);
     if (existingIdx !== -1) searches.splice(existingIdx, 1);
-    // Add to front
-    searches.unshift({ url, date: new Date().toISOString() });
+    searches.unshift({ url, title: '', thumbnail: '', date: new Date().toISOString() });
     if (searches.length > 20) searches.length = 20;
     saveSearches(searches);
+  }
+
+  function updateSearchEntry(url, title, thumbnail) {
+    const searches = getSearches();
+    const entry = searches.find((s) => s.url === url);
+    if (entry) {
+      if (title) entry.title = title;
+      if (thumbnail) entry.thumbnail = thumbnail;
+      saveSearches(searches);
+    }
   }
 
   function clearSearchHistory() {
@@ -263,7 +286,6 @@
       return;
     }
 
-    // Filter by text if provided
     const filtered = filterText
       ? searches.filter((s) => s.url.toLowerCase().includes(filterText.toLowerCase()))
       : searches;
@@ -274,22 +296,25 @@
       return;
     }
 
-    let html = '<div class="search-history-header"><span>Recent URLs</span><button class="search-history-clear" id="searchHistoryClearBtn">Clear</button></div>';
+    let html = '<div class="search-history-header"><span>Recent videos</span><button class="search-history-clear" id="searchHistoryClearBtn">Clear</button></div>';
 
     filtered.forEach((s) => {
-      // Extract a short display from the URL
-      const displayUrl = s.url.length > 60 ? s.url.slice(0, 57) + '...' : s.url;
+      const hasThumb = s.thumbnail && s.thumbnail.length > 0;
+      const displayTitle = s.title || (s.url.length > 55 ? s.url.slice(0, 52) + '...' : s.url);
       html += `
         <div class="search-history-item" data-url="${escapeHtml(s.url)}">
-          <span class="material-symbols-outlined">history</span>
-          <span class="history-title">${escapeHtml(displayUrl)}</span>          <span class="history-ext">${escapeHtml(formatTimeAgo(s.date))}</span>
+          ${hasThumb
+            ? `<div class="history-thumb"><img src="${escapeHtml(s.thumbnail)}" alt="" loading="lazy" /></div>`
+            : `<span class="material-symbols-outlined" style="font-size:18px;color:var(--color-outline);flex-shrink:0">history</span>`
+          }
+          <span class="history-title">${escapeHtml(displayTitle)}</span>
+          <span class="history-ext">${escapeHtml(formatTimeAgo(s.date))}</span>
         </div>`;
     });
 
     el.searchHistory.innerHTML = html;
     el.searchHistory.classList.add('visible');
 
-    // Bind clear button
     const clearBtn = el.searchHistory.querySelector('#searchHistoryClearBtn');
     if (clearBtn) {
       clearBtn.addEventListener('click', (e) => {
@@ -298,7 +323,6 @@
       });
     }
 
-    // Bind click on items
     el.searchHistory.querySelectorAll('.search-history-item').forEach((item) => {
       item.addEventListener('click', () => {
         const url = item.dataset.url;
@@ -339,9 +363,7 @@
       el.searchHistory.classList.remove('visible');
       fetchVideoInfo();
     }
-  });
-
-  // Hide search history when clicking outside
+  });    // Hide search history when clicking outside
   document.addEventListener('click', (e) => {
     const wrapper = el.urlInput.closest('.input-wrapper-with-dropdown');
     if (wrapper && !wrapper.contains(e.target)) {
@@ -361,6 +383,25 @@
     el.fetchBtn.disabled = true;
   });
 
+  // ── Auto-Download Toggle ────────────────────────────
+  function updateAutoDownloadUI() {
+    if (el.autoDownloadToggle) {
+      const icon = el.autoDownloadToggle.querySelector('.material-symbols-outlined');
+      icon.textContent = state.autoDownload ? 'download_done' : 'download';
+      el.autoDownloadToggle.title = state.autoDownload ? 'Auto-download is ON' : 'Auto-download is OFF';
+      el.autoDownloadToggle.classList.toggle('active-toggle', state.autoDownload);
+    }
+  }
+
+  if (el.autoDownloadToggle) {
+    el.autoDownloadToggle.addEventListener('click', () => {
+      state.autoDownload = !state.autoDownload;
+      savePref(PREF_AUTO_DOWNLOAD, state.autoDownload);
+      updateAutoDownloadUI();
+    });
+  }
+  updateAutoDownloadUI();
+
   // ── Format Tabs ─────────────────────────────────────
   el.formatTabs.addEventListener('click', (e) => {
     const tab = e.target.closest('.format-tab');
@@ -372,6 +413,8 @@
     tab.classList.add('active');
     state.activeTab = tabName;
     state.activeCodecFilter = 'all';
+    savePref(PREF_FORMAT_TAB, tabName);
+    savePref(PREF_CODEC_FILTER, 'all');
     renderCurrentTab();
   });
 
@@ -385,6 +428,7 @@
     el.codecSubTabs.querySelectorAll('.codec-sub-tab').forEach((b) => b.classList.remove('active'));
     btn.classList.add('active');
     state.activeCodecFilter = filter;
+    savePref(PREF_CODEC_FILTER, filter);
     renderCurrentTab();
   });
 
@@ -410,6 +454,9 @@
         const quickInfo = await quickResponse.json();
         state.videoInfo = quickInfo;
         state.videoId = quickInfo.id;
+
+        // Update search history with thumbnail + title from Phase 1
+        updateSearchEntry(state.url, quickInfo.title, quickInfo.thumbnail);
 
         // Show video card immediately
         renderVideoInfo(quickInfo);
@@ -454,9 +501,11 @@
       // Re-render video info with full data (better thumbnail etc.)
       renderVideoInfo(fullInfo);
 
-      // Populate the format tabs
+      // Populate the format tabs — persist the reset so preferences stay consistent
       state.activeTab = 'recommended';
       state.activeCodecFilter = 'all';
+      savePref(PREF_FORMAT_TAB, 'recommended');
+      savePref(PREF_CODEC_FILTER, 'all');
       el.formatTabs.querySelectorAll('.format-tab').forEach((t) => {
         t.classList.toggle('active', t.dataset.tab === 'recommended');
       });
@@ -672,6 +721,7 @@
         el.formatOptions.querySelectorAll('.thumbnail-option').forEach((o) => o.classList.remove('selected'));
         opt.classList.add('selected');
         state.selectedThumbnailQuality = opt.dataset.quality;
+        savePref(PREF_THUMBNAIL_QUALITY, opt.dataset.quality);
         // Update preview
         const previewImg = document.getElementById('thumbnailPreviewImg');
         if (previewImg) {
@@ -791,7 +841,7 @@
     show(el.progressCard);
     el.downloadBtn.style.display = 'none';
     el.newDownloadBtn.style.display = 'none';
-    el.progressTitle.textContent = 'Downloading';
+    el.progressTitle.textContent = 'Starting download…';
     el.progressBar.style.width = '0%';
     el.progressStatus.textContent = '0%';
     el.progressSpeed.textContent = '—';
@@ -854,7 +904,13 @@
         el.progressBar.style.width = '100%';
         el.progressStatus.textContent = '100%';
         el.progressTitle.textContent = 'Download complete';
-        el.downloadBtn.style.display = '';
+        // Auto-download: skip Save File button when toggle is ON
+        if (state.autoDownload) {
+          triggerFileDownload(state.downloadId);
+          el.downloadBtn.style.display = 'none';
+        } else {
+          el.downloadBtn.style.display = '';
+        }
         el.newDownloadBtn.style.display = '';
         el.newDownloadBtn.querySelector('.btn-label').textContent = 'New Download';
 
@@ -914,14 +970,18 @@
   }
 
   // ── Download File ───────────────────────────────────
-  el.downloadBtn.addEventListener('click', () => {
-    if (!state.downloadId) return;
+  function triggerFileDownload(id) {
+    if (!id) return;
     const a = document.createElement('a');
-    a.href = `/api/download/${state.downloadId}`;
+    a.href = `/api/download/${id}`;
     a.download = '';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  }
+
+  el.downloadBtn.addEventListener('click', () => {
+    triggerFileDownload(state.downloadId);
   });
 
   // ── Keyboard Shortcut: Escape = reset ───────────────
