@@ -388,7 +388,7 @@
     renderCurrentTab();
   });
 
-  // ── Fetch Video Info ────────────────────────────────
+  // ── Fetch Video Info (Two-Phase) ───────────────────
   async function fetchVideoInfo() {
     if (!state.url || state.isFetching) return;
 
@@ -397,33 +397,64 @@
     resetUI();
     show(el.loadingCard);
 
-    try {
-      const encodedUrl = encodeURIComponent(state.url);
-      const response = await fetch(`/api/info?url=${encodedUrl}`);
+    const encodedUrl = encodeURIComponent(state.url);
+    // Track this URL in search history (regardless of which phase succeeds)
+    trackSearch(state.url);
+    let quickSucceeded = false;
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || `Server error (${response.status})`);
+    try {
+      // ── Phase 1: Quick fetch — metadata only (~1 second) ──
+      const quickResponse = await fetch(`/api/info/quick?url=${encodedUrl}`);
+
+      if (quickResponse.ok) {
+        const quickInfo = await quickResponse.json();
+        state.videoInfo = quickInfo;
+        state.videoId = quickInfo.id;
+
+        // Show video card immediately
+        renderVideoInfo(quickInfo);
+        hide(el.loadingCard);
+        show(el.videoCard, el.formatCard);
+
+        // Show loading placeholder in format options
+        showFormatLoading();
+        quickSucceeded = true;
       }
 
-      const info = await response.json();
-      state.videoInfo = info;
+      // ── Phase 2: Full fetch — all formats (background) ──
+      const fullResponse = await fetch(`/api/info?url=${encodedUrl}`);
 
-      // Track this URL in search history
-      trackSearch(state.url);
+      if (!fullResponse.ok) {
+        if (!quickSucceeded) {
+          const data = await fullResponse.json().catch(() => ({}));
+          throw new Error(data.error || `Server error (${fullResponse.status})`);
+        }
+        // Quick succeeded but full failed — keep showing quick data + error
+        console.warn('Full format fetch failed, showing limited info');
+        el.formatOptions.innerHTML =
+          '<p style="color:var(--color-on-surface-variant);font-size:13px;padding:24px 0;text-align:center">Format details unavailable. Try refreshing.</p>';
+        return;
+      }
+
+      const fullInfo = await fullResponse.json();
+
+      // Merge full data into state (preserves quick info as fallback)
+      state.videoInfo = { ...(state.videoInfo || {}), ...fullInfo };
 
       // Categorize formats
-      const formats = info.formats || [];
+      const formats = fullInfo.formats || [];
       state.allFormats = {
-        recommended: info.bestOptions || [],
+        recommended: fullInfo.bestOptions || [],
         video: formats.filter((f) => f.hasVideo && !f.hasAudio),
         audio: formats.filter((f) => f.hasAudio && !f.hasVideo),
       };
 
-      state.videoId = info.id;
+      state.videoId = fullInfo.id;
 
-      renderVideoInfo(info);
-      // Reset to recommended tab
+      // Re-render video info with full data (better thumbnail etc.)
+      renderVideoInfo(fullInfo);
+
+      // Populate the format tabs
       state.activeTab = 'recommended';
       state.activeCodecFilter = 'all';
       el.formatTabs.querySelectorAll('.format-tab').forEach((t) => {
@@ -431,16 +462,34 @@
       });
       renderCurrentTab();
 
+      // Make sure everything is visible
       hide(el.loadingCard);
       show(el.videoCard, el.formatCard);
+
     } catch (err) {
       console.error('Fetch info error:', err);
-      showError(err.message || 'Failed to fetch video information. Check the URL and try again.');
+      // Only show error if we haven't shown the video card yet
+      if (!quickSucceeded) {
+        showError(err.message || 'Failed to fetch video information. Check the URL and try again.');
+      }
     } finally {
       state.isFetching = false;
       el.fetchBtn.disabled = !el.urlInput.value.trim();
     }
   }
+
+  // ── Format Loading Placeholder ───────────────────────
+  function showFormatLoading() {
+    el.formatOptions.innerHTML = `
+      <div class="format-loading">
+        <div class="spinner" style="width:24px;height:24px;margin:0 auto 10px;border-width:2px"></div>
+        <p class="format-loading-text">Loading format options…</p>
+      </div>
+    `;
+    show(el.formatCard);
+  }
+
+
 
   // ── Render Video Info ───────────────────────────────
   function renderVideoInfo(info) {

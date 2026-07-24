@@ -174,6 +174,21 @@ This is the **most impactful** optimization but also the most complex:
 | Format pre-selection | **Faster UX** | — | Low |
 | Native HTTP (no yt-dlp) | **10× faster** | — | Very High |
 
+## Implementation Status
+
+| Optimization | Status | Date |
+|---|---|---|
+| In-memory info cache | ⬜ Not implemented | — |
+| Selective format fetching | ⬜ Not implemented | — |
+| Progress polling | ✅ Already implemented | Built-in |
+| Two-phase fetch (quick + full) | ✅ Implemented | 2026-07-24 |
+| oEmbed quick API (no yt-dlp spawn) | ✅ Implemented | 2026-07-24 |
+| oEmbed response caching | ✅ Implemented | 2026-07-24 |
+| Partial audio merge | ⬜ Not implemented | — |
+| Concurrent downloads | ⬜ Not implemented | — |
+| Format pre-selection | ⬜ Not implemented | — |
+| Native HTTP (no yt-dlp) | ⬜ Not implemented | — |
+
 ## Recommendations
 
 1. **Start with** in-memory info caching (easiest, biggest impact for repeat URLs)

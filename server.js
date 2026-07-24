@@ -217,6 +217,126 @@ app.get('/api/info', async (req, res) => {
   }
 });
 
+/** Simple in-memory cache for oEmbed responses (10 min TTL) */
+const oembedCache = new Map();
+const OEMBED_CACHE_TTL = 10 * 60 * 1000;
+function getCachedOembed(url) {
+  const cached = oembedCache.get(url);
+  if (cached && Date.now() - cached.timestamp < OEMBED_CACHE_TTL) return cached.data;
+  return null;
+}
+function setCachedOembed(url, data) {
+  oembedCache.set(url, { data, timestamp: Date.now() });
+}
+
+/** GET /api/info/quick — fetch only video metadata via YouTube oEmbed (~200ms) */
+app.get('/api/info/quick', async (req, res) => {
+  const url = sanitizeUrl(req.query.url?.trim());
+  if (!url || !isValidYouTubeUrl(url)) {
+    return res.status(400).json({ error: 'Invalid YouTube URL. Please enter a valid YouTube URL.' });
+  }
+
+  // Check cache first
+  const cached = getCachedOembed(url);
+  if (cached) {
+    return res.json(cached);
+  }
+
+  try {
+    // Use YouTube's oEmbed API — lightweight HTTP call, no child process
+    // Typically returns in 200-500ms vs 6-12s for yt-dlp
+    const videoId = extractVideoId(url);
+    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const oembedResponse = await fetch(oembedUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!oembedResponse.ok) {
+      throw new Error(`oEmbed returned HTTP ${oembedResponse.status}`);
+    }
+
+    const oembedData = await oembedResponse.json();
+
+    // oEmbed thumbnail is always hqdefault; offer maxres as well if available
+    const result = {
+      id: videoId || '',
+      title: oembedData.title || 'Unknown',
+      // oEmbed returns hqdefault thumbnail; we'll upgrade when full data arrives
+      thumbnail: oembedData.thumbnail_url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      duration: 0, // oEmbed doesn't provide duration — will appear in Phase 2
+      uploader: oembedData.author_name || '',
+      uploaderUrl: oembedData.author_url || '',
+      viewCount: 0, // oEmbed doesn't provide view count — will appear in Phase 2
+    };
+
+    // Cache for repeat lookups
+    setCachedOembed(url, result);
+
+    res.json(result);
+  } catch (err) {
+    console.error('Quick info (oEmbed) error:', err.message);
+    // Fallback: try yt-dlp --print (slower but more complete)
+    try {
+      console.log('Falling back to yt-dlp --print for quick info...');
+      const result = spawnSync(YT_DLP, [
+        '--no-playlist',
+        '--skip-download',
+        '--no-warnings',
+        '--print', 'title: %(title)s',
+        '--print', 'id: %(id)s',
+        '--print', 'duration: %(duration)s',
+        '--print', 'thumbnail: %(thumbnail)s',
+        '--print', 'view_count: %(view_count)s',
+        '--print', 'uploader: %(uploader)s',
+        '--print', 'uploader_url: %(uploader_url)s',
+        url,
+      ], {
+        encoding: 'utf-8',
+        maxBuffer: 1 * 1024 * 1024,
+        timeout: 15000,
+      });
+
+      if (result.error) throw result.error;
+      if (result.status !== 0) throw new Error(`yt-dlp exited with code ${result.status}`);
+
+      const lines = result.stdout.trim().split('\n');
+      const info = {};
+      for (const line of lines) {
+        const idx = line.indexOf(': ');
+        if (idx > 0) {
+          const key = line.slice(0, idx).trim();
+          const value = line.slice(idx + 2).trim();
+          if (key === 'duration' || key === 'view_count') {
+            info[key] = parseInt(value, 10) || 0;
+          } else {
+            info[key] = value;
+          }
+        }
+      }
+
+      const fallbackResult = {
+        id: info.id || videoId || '',
+        title: info.title || 'Unknown',
+        thumbnail: info.thumbnail || '',
+        duration: info.duration || 0,
+        uploader: info.uploader || '',
+        uploaderUrl: info.uploader_url || '',
+        viewCount: info.view_count || 0,
+      };
+
+      setCachedOembed(url, fallbackResult);
+      return res.json(fallbackResult);
+    } catch (fallbackErr) {
+      console.error('yt-dlp fallback also failed:', fallbackErr.message);
+      return res.status(500).json({
+        error: 'Failed to fetch video info. The video might be private, age-restricted, or unavailable.',
+      });
+    }
+  }
+});
+
 /** Track active downloads for progress streaming */
 const activeDownloads = new Map();
 
