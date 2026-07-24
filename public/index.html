@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'));</script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube Downloader</title>
+
+  <!-- Google Fonts & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" />
+</head>
+<body>
+  <!-- ════════════════════ App Shell ════════════════════ -->
+  <div id="app">
+    <!-- Top App Bar -->
+    <header class="app-bar">
+      <div class="app-bar-content">
+        <div class="app-bar-start">
+          <span class="material-symbols-outlined app-icon">download</span>
+          <h1 class="app-title">Downloader</h1>
+        </div>
+        <div class="app-bar-end">
+          <button id="themeToggle" class="icon-btn" aria-label="Toggle theme" title="Toggle theme">
+            <span class="material-symbols-outlined">dark_mode</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="container">
+        <!-- URL Input Card -->
+        <section class="card url-card" id="urlCard">
+          <div class="card-content">
+            <div class="input-wrapper">
+              <span class="material-symbols-outlined input-icon">link</span>
+              <input
+                type="url"
+                id="urlInput"
+                class="input"
+                placeholder="Paste a YouTube URL…"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button id="fetchBtn" class="btn btn-primary" disabled>
+                <span class="material-symbols-outlined">search</span>
+                <span class="btn-label">Get Info</span>
+              </button>
+            </div>
+            <p class="input-hint">Supports youtube.com, youtu.be, shorts, and playlists</p>
+          </div>
+        </section>
+
+        <!-- Loading State -->
+        <section class="card loading-card" id="loadingCard" style="display:none">
+          <div class="card-content" style="text-align:center;padding:48px 24px">
+            <div class="spinner"></div>
+            <p class="loading-text">Fetching video information…</p>
+          </div>
+        </section>
+
+        <!-- Video Info Card -->
+        <section class="card video-card" id="videoCard" style="display:none">
+          <div class="video-card-layout">
+            <!-- Thumbnail -->
+            <div class="thumbnail-wrapper">
+              <img id="thumbnail" class="thumbnail" alt="Video thumbnail" />
+              <span class="duration-badge" id="durationBadge">0:00</span>
+            </div>
+            <!-- Info -->
+            <div class="video-info">
+              <h2 class="video-title" id="videoTitle"></h2>
+              <p class="video-uploader" id="videoUploader"></p>
+              <p class="video-meta" id="videoMeta"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Format Selection Card -->
+        <section class="card format-card" id="formatCard" style="display:none">
+          <div class="card-header">
+            <h3 class="card-title">Choose Format</h3>
+          </div>
+          <div class="card-content format-options" id="formatOptions">
+            <!-- Dynamically populated -->
+          </div>
+        </section>
+
+        <!-- Download & Progress Card -->
+        <section class="card progress-card" id="progressCard" style="display:none">
+          <div class="card-content">
+            <div class="progress-header">
+              <span class="progress-title" id="progressTitle">Downloading…</span>
+              <span class="progress-status" id="progressStatus">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar" id="progressBar" style="width:0%"></div>
+            </div>
+            <div class="progress-details" id="progressDetails">
+              <span id="progressSpeed">—</span>
+              <span id="progressEta">—</span>
+              <span id="progressSize">—</span>
+            </div>
+            <div class="progress-actions">
+              <button class="btn btn-secondary" id="downloadBtn" style="display:none">
+                <span class="material-symbols-outlined">download</span>
+                <span class="btn-label">Save File</span>
+              </button>
+              <button class="btn btn-secondary" id="newDownloadBtn" style="display:none">
+                <span class="material-symbols-outlined">refresh</span>
+                <span class="btn-label">New Download</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Error Card -->
+        <section class="card error-card" id="errorCard" style="display:none">
+          <div class="card-content">
+            <div class="error-content">
+              <span class="material-symbols-outlined error-icon">error</span>
+              <div>
+                <p class="error-title">Something went wrong</p>
+                <p class="error-message" id="errorMessage"></p>
+              </div>
+            </div>
+            <button id="retryBtn" class="btn btn-secondary">
+              <span class="material-symbols-outlined">refresh</span>
+              <span class="btn-label">Try Again</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Powered by <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">yt-dlp</a> &middot; Built with <span style="color:var(--color-error)">♥</span></p>
+    </footer>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

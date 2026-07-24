@@ -1,0 +1,29 @@
+node_modules
+package-lock.json
+
+# Downloaded video files
+downloads/
+*.mp4
+*.webm
+*.mkv
+*.m4a
+*.mp3
+*.opus
+
+# Config files with personal data
+cookies.txt
+cookies.json
+config.txt
+*.conf
+
+# Temporary / partial downloads
+*.part
+*.ytdl
+*.temp
+*.tmp
+*.f*
+*.dwnld
+
+# OS files
+Thumbs.db
+.DS_Store
