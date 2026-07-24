@@ -375,8 +375,9 @@
         desc += ` · ~${sizeMB}MB`;
       }
     } else if (fmt.hasVideo) {
-      name = `${fmt.quality} Video Only`;
-      desc = `${fmt.ext.toUpperCase()} · ${fmt.vcodec !== 'none' ? fmt.vcodec.split('.')[0].toUpperCase() : 'Video'}${fmt.fps > 0 ? ` · ${fmt.fps}fps` : ''}`;
+      const codecName = fmt.codecCategory || (fmt.vcodec !== 'none' ? fmt.vcodec.split('.')[0].toUpperCase() : 'Video');
+      name = `${fmt.quality} ${codecName}`;
+      desc = `${fmt.ext.toUpperCase()} · ${fmt.fps > 0 ? `${fmt.fps}fps · ` : ''}No audio`;
       if (fmt.filesize) {
         const sizeMB = (fmt.filesize / 1024 / 1024).toFixed(1);
         desc += ` · ~${sizeMB}MB`;

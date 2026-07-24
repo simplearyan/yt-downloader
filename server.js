@@ -114,18 +114,37 @@ app.get('/api/info', async (req, res) => {
 
     // Build format list for the user to pick from
     const formats = (data.formats || [])
-      .filter((f) => f.vcodec !== 'none' || f.acodec !== 'none')
-      .map((f) => ({
-        formatId: f.format_id,
-        ext: f.ext,
-        quality: f.height ? `${f.height}p` : f.abr ? `${Math.round(f.abr)}kbps` : 'audio only',
-        vcodec: f.vcodec || 'none',
-        acodec: f.acodec || 'none',
-        filesize: f.filesize || f.filesize_approx || 0,
-        fps: f.fps || 0,
-        hasVideo: f.vcodec !== 'none',
-        hasAudio: f.acodec !== 'none',
-      }))
+      .filter((f) => (f.vcodec !== 'none' || f.acodec !== 'none'))
+      // Skip storyboard and very low-res formats (height < 200 or format_id starts with 'sb')
+      .filter((f) => {
+        if (String(f.format_id || '').startsWith('sb')) return false;
+        if (f.height && f.height > 0 && f.height < 200) return false;
+        return true;
+      })
+      .map((f) => {
+        // Categorize the video codec for display
+        let codecCategory = '';
+        const vc = (f.vcodec || '').toLowerCase();
+        if (vc.startsWith('avc') || vc.startsWith('h.264') || vc.startsWith('x264')) codecCategory = 'H.264';
+        else if (vc.startsWith('vp9')) codecCategory = 'VP9';
+        else if (vc.startsWith('av01')) codecCategory = 'AV1';
+        else if (vc.startsWith('hev') || vc.startsWith('h.265') || vc.startsWith('x265')) codecCategory = 'H.265';
+        else if (vc.startsWith('vp8')) codecCategory = 'VP8';
+        else if (f.vcodec !== 'none') codecCategory = (f.vcodec || '').split('.')[0].toUpperCase();
+
+        return {
+          formatId: f.format_id,
+          ext: f.ext,
+          quality: f.height ? `${f.height}p` : f.abr ? `${Math.round(f.abr)}kbps` : 'audio only',
+          vcodec: f.vcodec || 'none',
+          acodec: f.acodec || 'none',
+          codecCategory,
+          filesize: f.filesize || f.filesize_approx || 0,
+          fps: f.fps || 0,
+          hasVideo: f.vcodec !== 'none',
+          hasAudio: f.acodec !== 'none',
+        };
+      })
       .filter((f) => f.hasVideo || f.hasAudio);
 
     // Add convenience options at the top
@@ -135,6 +154,17 @@ app.get('/api/info', async (req, res) => {
         formatId: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         ext: 'mp4',
         quality: 'Best',
+        codecCategory: '',
+        hasVideo: true,
+        hasAudio: true,
+        isBest: true,
+      },
+      {
+        label: '\uD83C\uDFB5 H.264 Video + Audio (MP4)',
+        formatId: 'bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        ext: 'mp4',
+        quality: 'H.264',
+        codecCategory: 'H.264',
         hasVideo: true,
         hasAudio: true,
         isBest: true,
@@ -144,6 +174,7 @@ app.get('/api/info', async (req, res) => {
         formatId: 'bestaudio/best',
         ext: 'mp3',
         quality: 'Best',
+        codecCategory: '',
         hasVideo: false,
         hasAudio: true,
         isBest: true,
@@ -183,7 +214,7 @@ app.post('/api/download', (req, res) => {
     return res.status(400).json({ error: 'No format selected.' });
   }
   // Validate formatId against known-safe pattern
-  if (!/^[\w.*+\-\/\[\]=]+$/.test(formatId)) {
+  if (!/^[\w.*+\-\/\[\]=^]+$/.test(formatId)) {
     return res.status(400).json({ error: 'Invalid format identifier.' });
   }
 
