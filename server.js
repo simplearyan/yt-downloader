@@ -23,9 +23,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+/** Strip tracking parameters from a YouTube URL */
+function sanitizeUrl(url) {
+  try {
+    const u = new URL(url);
+    // Remove known tracking/analytics parameters
+    const trackingParams = ['si', 'feature', 'pp', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+    trackingParams.forEach(p => u.searchParams.delete(p));
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
 /** Validate that a string looks like a YouTube URL */
 function isValidYouTubeUrl(url) {
   if (!url || typeof url !== 'string') return false;
+  // Allow optional tracking params after the video ID (no $ anchor)
   const patterns = [
     /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]{11}/,
     /^https?:\/\/(www\.)?youtube\.com\/embed\/[\w-]{11}/,
@@ -69,7 +83,7 @@ setInterval(cleanOldDownloads, 30 * 60 * 1000); // every 30 min
 
 /** GET /api/info — fetch video metadata from yt-dlp */
 app.get('/api/info', async (req, res) => {
-  const url = req.query.url?.trim();
+  const url = sanitizeUrl(req.query.url?.trim());
   if (!url || !isValidYouTubeUrl(url)) {
     return res.status(400).json({ error: 'Invalid YouTube URL. Please enter a valid YouTube URL.' });
   }
@@ -119,7 +133,7 @@ app.get('/api/info', async (req, res) => {
     // Add convenience options at the top
     const bestOptions = [
       {
-        label: '🎬 Best Video + Audio (MP4)',
+        label: '\uD83C\uDFAC Best Video + Audio (MP4)',
         formatId: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         ext: 'mp4',
         quality: 'Best',
@@ -128,7 +142,7 @@ app.get('/api/info', async (req, res) => {
         isBest: true,
       },
       {
-        label: '🎵 Best Audio Only (MP3)',
+        label: '\uD83C\uDFB5 Best Audio Only (MP3)',
         formatId: 'bestaudio/best',
         ext: 'mp3',
         quality: 'Best',
@@ -188,7 +202,7 @@ app.post('/api/download', (req, res) => {
     '-o', outputTemplate,
     '--merge-output-format', ext === 'mp3' ? 'mp3' : 'mp4',
     '--embed-metadata',
-    url,
+    sanitizeUrl(url),
   ];
 
   // If no audio is needed, don't embed metadata (avoid ffmpeg errors)
