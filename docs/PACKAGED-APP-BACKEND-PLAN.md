@@ -1,7 +1,7 @@
 # Packaged App Backend Plan — how to make the installed app actually download
 
 **Date:** 2026-08-15
-**Status:** Analysis done — awaiting decision, not implemented
+**Status:** In progress — Option C stopgap shipped (v0.2.1+); Option B Phase 0–1 done (Rust backend on :3021 with Node backfill)
 
 ---
 
@@ -118,6 +118,10 @@ All options share two small frontend/backend prerequisites (do them first):
    `http://127.0.0.1:3021` when running under Tauri) + a small boot retry so the
    first search succeeds while the backend is still starting.
 
+**Current state (both shipped):**
+- **Option C stopgap (committed `8e7950e`, released v0.2.1+/v0.2.2-beta):** Express is bundled as a Tauri resource, `lib.rs` spawns `node backend/server.js` on :3021 in release builds (Node 18+ required), `app.js` has `API_BASE` + boot retry + a clear Node-missing error.
+- **Option B Phase 0–1 (in progress):** `backend.rs` implements the Rust server — `GET /api/info/quick` natively (oEmbed + 10-min cache + yt-dlp `--print` fallback, same JSON shape), every not-yet-ported route is **proxied to the Node stopgap on :3022** so the app keeps working while the port proceeds, and if Rust can't bind, `lib.rs` falls back to Node directly on :3021. CORS handled by middleware (single consistent set, Node's own headers dropped on proxy).
+
 ---
 
 ## 4. Implementation plan (Option B)
@@ -132,6 +136,9 @@ All options share two small frontend/backend prerequisites (do them first):
   `127.0.0.1:3021`.
 - `GET /api/info/quick`: `reqwest` oEmbed call + 10-min in-memory cache + the
   yt-dlp `--print` fallback, same JSON shape.
+
+- **Status: DONE** (`src-tauri/src/backend.rs`, compiled into release builds only). Verified: `cargo check --release` + debug clean, real-network test (`cargo test --release quick_info_serves_json_with_cors -- --ignored`) returns JSON with the right video id + CORS header.
+- Remaining: exercise the proxy fallback path in a test and confirm the full `tauri build` bundles it (covered in Phase 4).
 
 ### Phase 2 — Full format fetch
 - `GET /api/info`: spawn `yt-dlp --dump-json`, parse with `serde_json`, port the
