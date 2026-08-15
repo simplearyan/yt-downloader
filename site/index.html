@@ -174,6 +174,38 @@
       </div>
     </section>
 
+    <!-- Settings -->
+    <section class="section" id="settings">
+      <div class="container">
+        <p class="eyebrow">Settings</p>
+        <h2 class="section-title">Browser cookies for downloads</h2>
+        <p class="section-sub">Use your signed-in browser session so YouTube stops throttling downloads &mdash; fixes mid-download 403 errors.</p>
+        <div class="settings-grid">
+          <div class="card settings-card">
+            <h3 class="settings-title">Choose a browser</h3>
+            <label class="settings-label" for="siteCookiesSelect">Browser to read cookies from</label>
+            <select id="siteCookiesSelect" class="settings-select">
+              <option value="">Off &mdash; no cookies</option>
+              <option value="chrome">Chrome</option>
+              <option value="edge">Edge</option>
+              <option value="firefox">Firefox</option>
+            </select>
+            <p class="settings-hint">Works best with Firefox or Edge &mdash; Chrome may need to be fully closed first.</p>
+          </div>
+          <div class="card settings-card">
+            <h3 class="settings-title">Your setup</h3>
+            <p class="settings-status" id="siteCookiesStatus"></p>
+            <div class="settings-command-row">
+              <code class="settings-command" id="siteCookiesCommand"></code>
+              <button id="siteCookiesCopy" class="btn btn-ghost btn-sm" type="button">Copy</button>
+            </div>
+            <button id="siteCookiesDownload" class="btn btn-primary btn-sm" type="button"><svg class="lucide" aria-hidden="true"><use href="#lucide-download"></use></svg>Download config.json</button>
+            <p class="settings-note">Self-hosting? Drop <code>config.json</code> next to the app's <code>downloads</code> folder &mdash; no file editing needed. In the desktop app, use the Settings gear instead.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- FAQ -->
     <section class="section section-alt" id="faq">
       <div class="container">

@@ -161,6 +161,81 @@ function initFaq() {
   });
 }
 
+/* ---------- Settings: browser cookies ---------- */
+const COOKIE_KEY = 'ytdl-cookies';
+const COOKIE_LABELS = { chrome: 'Chrome', edge: 'Edge', firefox: 'Firefox' };
+
+function initSettings() {
+  const select = document.getElementById('siteCookiesSelect');
+  const status = document.getElementById('siteCookiesStatus');
+  const cmd = document.getElementById('siteCookiesCommand');
+  const copyBtn = document.getElementById('siteCookiesCopy');
+  const dlBtn = document.getElementById('siteCookiesDownload');
+  if (!select || !status || !cmd) return;
+
+  let saved = '';
+  try { saved = localStorage.getItem(COOKIE_KEY) || ''; } catch (e) {}
+  select.value = COOKIE_LABELS[saved] ? saved : '';
+
+  function render() {
+    const v = select.value;
+    try { localStorage.setItem(COOKIE_KEY, v); } catch (e) {}
+    if (v) {
+      status.textContent = 'Downloads will read cookies from your signed-in ' + (COOKIE_LABELS[v] || v) + ' session.';
+      cmd.textContent = 'YTDL_COOKIES_BROWSER=' + v + ' npm start';
+      if (dlBtn) dlBtn.style.display = '';
+    } else {
+      status.textContent = 'Cookies are off \u2014 downloads use the automatic fallback client.';
+      cmd.textContent = 'npm start';
+      if (dlBtn) dlBtn.style.display = 'none';
+    }
+  }
+
+  render();
+  select.addEventListener('change', render);
+
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      const text = cmd.textContent;
+      const done = () => {
+        copyBtn.textContent = 'Copied \u2713';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  if (dlBtn) {
+    dlBtn.addEventListener('click', () => {
+      const v = select.value;
+      const blob = new Blob([JSON.stringify({ cookiesBrowser: v }, null, 2) + '\n'], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'config.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    });
+  }
+}
+
 /* ---------- Footer year ---------- */
 function initYear() {
   const y = document.getElementById('year');
@@ -171,6 +246,7 @@ function initYear() {
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initReleases();
+  initSettings();
   initFaq();
   initYear();
 });

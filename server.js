@@ -16,6 +16,34 @@ const SERVE_STATIC = process.env.SERVE_STATIC !== '0';
 const YT_DLP = 'yt-dlp';
 const MAX_FILE_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
+// ── App settings (persisted) ────────────────────────────────────────────────
+// The UI writes settings here via /api/settings. The file lives next to the
+// downloads dir so it is writable in both web mode (APP_ROOT) and the
+// packaged app (app-data). Env vars still win for server operators.
+const CONFIG_FILE = process.env.CONFIG_FILE || path.join(path.dirname(DOWNLOADS_DIR), 'config.json');
+const DEFAULT_CONFIG = { cookiesBrowser: '' };
+let appConfig = loadConfig();
+
+function loadConfig() {
+  try {
+    return { ...DEFAULT_CONFIG, ...JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')) };
+  } catch {
+    return { ...DEFAULT_CONFIG };
+  }
+}
+
+function saveConfig(patch) {
+  appConfig = { ...appConfig, ...patch };
+  try {
+    fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(appConfig, null, 2));
+    return true;
+  } catch (err) {
+    console.error('Failed to save settings:', err.message);
+    return false;
+  }
+}
+
 // Ensure downloads directory exists
 if (!fs.existsSync(DOWNLOADS_DIR)) {
   fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
@@ -471,32 +499,9 @@ app.post('/api/download', (req, res) => {
   const progressTemplate =
     'stdout:{"p":"%(progress._percent_str)s","s":"%(progress._speed_str)s","e":"%(progress._eta_str)s","t":"%(progress._total_bytes_str)s"}';
 
-  const args = [
-    '--no-playlist',
-    '--newline',
-    '--progress',
-    '--no-warnings',
-    '--progress-template', progressTemplate,
-    '-f', formatId,
-    '-o', outputTemplate,
-    '--merge-output-format', ext === 'mp3' ? 'mp3' : 'mp4',
-    '--embed-metadata',
-    sanitizeUrl(url),
-  ];
-
-  // If no audio is needed, don't embed metadata (avoid ffmpeg errors)
-  if (formatId.startsWith('bestvideo')) {
-    args.push('--no-embed-metadata');
-  }
-
-  const proc = spawn(YT_DLP, args, {
-    cwd: DOWNLOADS_DIR,
-    shell: false,
-  });
-
   const downloadState = {
     id: downloadId,
-    proc,
+    proc: null,
     outputPath: null,
     progress: 0,
     speed: '',
@@ -504,98 +509,174 @@ app.post('/api/download', (req, res) => {
     totalSize: '',
     status: 'downloading',
     error: null,
+    notice: null,
     createdAt: Date.now(),
   };
 
   activeDownloads.set(downloadId, downloadState);
 
-  // Parse real-time progress from stdout JSON lines
-  // The --progress-template outputs lines like: stdout:{"p":" 45.2%","s":" 2.3MiB/s","e":"00:12","t":" 50.23MiB"}
-  let stdoutBuf = '';
-  proc.stdout.on('data', (chunk) => {
-    const text = chunk.toString();
-    stdoutBuf += text;
+  // ── YouTube client failover ─────────────────────────────────────────────
+  // YouTube throttles / bot-flags the default web client on some networks,
+  // revoking the stream mid-download with HTTP 403 Forbidden (reproduced:
+  // default client died at ~16-56% while the android client completed the
+  // same video). We retry once with the android player client, which is not
+  // throttled (it may cap resolution on some videos, but it downloads).
+  // Power users can set YTDL_COOKIES_BROWSER (e.g. "chrome", "edge",
+  // "firefox") to use their signed-in browser cookies — the most reliable
+  // fix for 403s, at full quality.
+  const CLIENTS = ['default', 'android'];
+  let attempt = 0;
+  let lastStderr = '';
 
-    // Split by newline and process complete lines
-    const lines = stdoutBuf.split('\n');
-    stdoutBuf = lines.pop(); // keep incomplete line in buffer
+  function runAttempt() {
+    const args = [
+      '--no-playlist',
+      '--newline',
+      '--progress',
+      '--no-warnings',
+      '--progress-template', progressTemplate,
+      '-f', formatId,
+      '-o', outputTemplate,
+      '--merge-output-format', ext === 'mp3' ? 'mp3' : 'mp4',
+      '--embed-metadata',
+      sanitizeUrl(url),
+    ];
 
-    for (const rawLine of lines) {
-      const line = rawLine.trim();
-      if (!line) continue;
+    // Browser cookies: the UI setting (config.json) wins, env var is a server override
+    const cookiesBrowser = (appConfig.cookiesBrowser || process.env.YTDL_COOKIES_BROWSER || '').trim();
+    if (cookiesBrowser) {
+      args.push('--cookies-from-browser', cookiesBrowser);
+    }
 
-      // Progress JSON lines start with "stdout:{..."
-      if (line.startsWith('stdout:{') && line.endsWith('}')) {
-        try {
-          const jsonStr = line.slice(7); // strip "stdout:" prefix
-          const data = JSON.parse(jsonStr);
+    if (CLIENTS[attempt] !== 'default') {
+      args.push('--extractor-args', `youtube:player_client=${CLIENTS[attempt]}`);
+    }
 
-          // Parse percent (e.g., " 45.2%" -> 45.2)
-          if (data.p && data.p !== 'NA') {
-            const pct = parseFloat(data.p.replace('%', '').trim());
-            if (!isNaN(pct)) downloadState.progress = pct;
+    // If no audio is needed, don't embed metadata (avoid ffmpeg errors)
+    if (formatId.startsWith('bestvideo')) {
+      args.push('--no-embed-metadata');
+    }
+
+    const proc = spawn(YT_DLP, args, {
+      cwd: DOWNLOADS_DIR,
+      shell: false,
+    });
+    downloadState.proc = proc;
+
+    // Parse real-time progress from stdout JSON lines
+    // The --progress-template outputs lines like: stdout:{"p":" 45.2%","s":" 2.3MiB/s","e":"00:12","t":" 50.23MiB"}
+    let stdoutBuf = '';
+    proc.stdout.on('data', (chunk) => {
+      const text = chunk.toString();
+      stdoutBuf += text;
+
+      // Split by newline and process complete lines
+      const lines = stdoutBuf.split('\n');
+      stdoutBuf = lines.pop(); // keep incomplete line in buffer
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+
+        // Progress JSON lines start with "stdout:{..."
+        if (line.startsWith('stdout:{') && line.endsWith('}')) {
+          try {
+            const jsonStr = line.slice(7); // strip "stdout:" prefix
+            const data = JSON.parse(jsonStr);
+
+            // Parse percent (e.g., " 45.2%" -> 45.2)
+            if (data.p && data.p !== 'NA') {
+              const pct = parseFloat(data.p.replace('%', '').trim());
+              if (!isNaN(pct)) downloadState.progress = pct;
+            }
+
+            // Speed (e.g., " 2.3MiB/s")
+            if (data.s && data.s !== 'NA') {
+              downloadState.speed = data.s.trim();
+            }
+
+            // ETA (e.g., "00:12")
+            if (data.e && data.e !== 'NA') {
+              downloadState.eta = data.e.trim();
+            }
+
+            // Total size (e.g., " 50.23MiB")
+            if (data.t && data.t !== 'NA') {
+              downloadState.totalSize = data.t.trim();
+            }
+
+            // When progress hits 100%, mark as processing
+            if (downloadState.progress >= 100) {
+              downloadState.status = 'processing';
+            }
+          } catch {
+            // skip malformed JSON lines
           }
-
-          // Speed (e.g., " 2.3MiB/s")
-          if (data.s && data.s !== 'NA') {
-            downloadState.speed = data.s.trim();
-          }
-
-          // ETA (e.g., "00:12")
-          if (data.e && data.e !== 'NA') {
-            downloadState.eta = data.e.trim();
-          }
-
-          // Total size (e.g., " 50.23MiB")
-          if (data.t && data.t !== 'NA') {
-            downloadState.totalSize = data.t.trim();
-          }
-
-          // When progress hits 100%, mark as processing
-          if (downloadState.progress >= 100) {
-            downloadState.status = 'processing';
-          }
-        } catch {
-          // skip malformed JSON lines
+        } else if (line && !line.startsWith('[') && !line.startsWith('stdout:') && fs.existsSync(line)) {
+          // yt-dlp outputs the final filename on stdout (non-JSON, non-bracket lines)
+          downloadState.outputPath = line;
         }
-      } else if (line && !line.startsWith('[') && !line.startsWith('stdout:') && fs.existsSync(line)) {
-        // yt-dlp outputs the final filename on stdout (non-JSON, non-bracket lines)
-        downloadState.outputPath = line;
       }
-    }
-  });
+    });
 
-  // Log stderr for debugging (progress goes to stdout now)
-  proc.stderr.on('data', (chunk) => {
-    const text = chunk.toString().trim();
-    if (text) console.log('yt-dlp:', text.split('\n').pop());
-  });
-
-  proc.on('close', (code) => {
-    if (code === 0) {
-      // Find the output file
-      const files = fs.readdirSync(DOWNLOADS_DIR);
-      const file = files.find((f) => f.startsWith(downloadId));
-      if (file) {
-        downloadState.outputPath = path.join(DOWNLOADS_DIR, file);
+    // Keep the last meaningful stderr line for a useful error message
+    proc.stderr.on('data', (chunk) => {
+      const text = chunk.toString().trim();
+      if (text) {
+        const lastLine = text.split('\n').pop();
+        if (lastLine) lastStderr = lastLine;
+        console.log('yt-dlp:', lastLine);
       }
-      downloadState.status = 'completed';
-      downloadState.progress = 100;
-    } else {
+    });
+
+    proc.on('error', (err) => {
       downloadState.status = 'failed';
-      downloadState.error = `yt-dlp exited with code ${code}`;
-    }
+      downloadState.error = err.message;
+    });
 
-    // Clean up download state after a delay
-    setTimeout(() => {
-      activeDownloads.delete(downloadId);
-    }, 5 * 60 * 1000);
-  });
+    proc.on('close', (code) => {
+      if (code === 0) {
+        // Find the output file
+        const files = fs.readdirSync(DOWNLOADS_DIR);
+        const file = files.find((f) => f.startsWith(downloadId));
+        if (file) {
+          downloadState.outputPath = path.join(DOWNLOADS_DIR, file);
+        }
+        downloadState.status = 'completed';
+        downloadState.progress = 100;
+        downloadState.notice = null;
+      } else {
+        // Retry once with the android client when YouTube 403s / throttles
+        const retryable =
+          attempt < CLIENTS.length - 1 &&
+          /403|Forbidden|throttl|unable to download|bot|Sign in to confirm/i.test(lastStderr);
 
-  proc.on('error', (err) => {
-    downloadState.status = 'failed';
-    downloadState.error = err.message;
-  });
+        if (retryable) {
+          console.log(`yt-dlp attempt ${attempt + 1} failed (${lastStderr}) — retrying with the ${CLIENTS[attempt + 1]} client…`);
+          attempt += 1;
+          downloadState.progress = 0;
+          downloadState.speed = '';
+          downloadState.eta = '';
+          downloadState.totalSize = '';
+          downloadState.notice = 'YouTube throttled this download — retrying with a fallback client…';
+          runAttempt();
+          return;
+        }
+
+        downloadState.status = 'failed';
+        downloadState.error = lastStderr
+          ? `yt-dlp exited with code ${code} — ${lastStderr}`
+          : `yt-dlp exited with code ${code}`;
+      }
+
+      // Clean up download state after a delay
+      setTimeout(() => {
+        activeDownloads.delete(downloadId);
+      }, 5 * 60 * 1000);
+    });
+  }
+
+  runAttempt();
 
   res.json({ downloadId });
 });
@@ -631,6 +712,7 @@ app.get('/api/progress/:id', (req, res) => {
         totalSize: s.totalSize,
         status: s.status,
         error: s.error,
+        notice: s.notice,
       })}\n\n`
     );
 
@@ -674,6 +756,22 @@ app.get('/api/download/:id', (req, res) => {
   }
 
   res.status(404).json({ error: 'File not found. It may have expired.' });
+});
+
+/** GET /api/settings — current app settings */
+app.get('/api/settings', (req, res) => {
+  res.json({ cookiesBrowser: appConfig.cookiesBrowser || '' });
+});
+
+/** POST /api/settings — update app settings (persisted to config.json) */
+app.post('/api/settings', (req, res) => {
+  const { cookiesBrowser } = req.body || {};
+  const value = String(cookiesBrowser || '').toLowerCase().trim();
+  if (!['', 'chrome', 'edge', 'firefox'].includes(value)) {
+    return res.status(400).json({ error: 'Invalid browser. Choose from: chrome, edge, firefox.' });
+  }
+  const saved = saveConfig({ cookiesBrowser: value });
+  res.json({ cookiesBrowser: value, saved });
 });
 
 // ── Serve SPA (catch-all) ──────────────────────────────────────────────────

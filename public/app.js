@@ -70,6 +70,7 @@
     progressSpeed: $('#progressSpeed'),
     progressEta: $('#progressEta'),
     progressSize: $('#progressSize'),
+    progressNotice: $('#progressNotice'),
     downloadBtn: $('#downloadBtn'),
     newDownloadBtn: $('#newDownloadBtn'),
     errorCard: $('#errorCard'),
@@ -82,6 +83,14 @@
     codecSubTabs: $('#codecSubTabs'),
     autoDownloadToggle: $('#autoDownloadToggle'),
     mainContent: $('.main-content'),
+    settingsBtn: $('#settingsBtn'),
+    settingsDot: $('#settingsDot'),
+    settingsModal: $('#settingsModal'),
+    settingsModalClose: $('#settingsModalClose'),
+    settingsCancelBtn: $('#settingsCancelBtn'),
+    settingsSaveBtn: $('#settingsSaveBtn'),
+    cookiesBrowserSelect: $('#cookiesBrowserSelect'),
+    settingsSaved: $('#settingsSaved'),
     updateBtn: $('#updateBtn'),
     updateModal: $('#updateModal'),
     updateModalBody: $('#updateModalBody'),
@@ -941,6 +950,8 @@
     el.progressSpeed.textContent = '—';
     el.progressEta.textContent = '—';
     el.progressSize.textContent = '—';
+    el.progressNotice.style.display = 'none';
+    el.progressNotice.textContent = '';
 
     try {
       const response = await fetch(`${API_BASE}/api/download`, {
@@ -994,6 +1005,8 @@
       isDone = true;
       clearTimeout(sseTimeout);
       evtSource.close();
+      el.progressNotice.style.display = 'none';
+      el.progressNotice.textContent = '';
 
       if (status === 'completed') {
         el.progressBar.style.width = '100%';
@@ -1022,7 +1035,17 @@
           });
         }
       } else if (status === 'failed' || status === 'expired') {
-        showError(status === 'failed' ? (state.lastError || 'Download failed.') : 'Download session expired. Please try again.');
+        let msg = status === 'failed'
+          ? (state.lastError || 'Download failed.')
+          : 'Download session expired. Please try again.';
+        // YouTube throttling/bot-check shows up as a 403 mid-download; the
+        // backend already retried with a fallback client, so give a clear hint.
+        if (/403|Forbidden|throttl|bot|Sign in to confirm/i.test(msg)) {
+          msg += ' — YouTube is throttling downloads on this network right now. ' +
+            'The app retried with a fallback client automatically. Try again, ' +
+            'pick a different format, or wait a few minutes.';
+        }
+        showError(msg);
       }
       state.isDownloading = false;
     }
@@ -1034,6 +1057,12 @@
       try {
         const data = JSON.parse(e.data);
         state.lastError = data.error;
+
+        // Live notice (e.g. "throttled — retrying with fallback client")
+        if (data.notice) {
+          el.progressNotice.textContent = data.notice;
+          el.progressNotice.style.display = '';
+        }
 
         if (data.status === 'downloading' || data.status === 'processing') {
           const pct = Math.round(data.progress || 0);
@@ -1222,11 +1251,90 @@
     if (e.target === el.updateModal) closeUpdateModal();
   });
 
+  // ── Settings Modal ────────────────────────────────
+  const COOKIE_BROWSERS = ['', 'chrome', 'edge', 'firefox'];
+
+  async function openSettingsModal() {
+    el.settingsSaved.style.display = 'none';
+    el.cookiesBrowserSelect.value = '';
+    try {
+      const res = await fetch(`${API_BASE}/api/settings`);
+      if (res.ok) {
+        const data = await res.json();
+        if (COOKIE_BROWSERS.includes(data.cookiesBrowser || '')) {
+          el.cookiesBrowserSelect.value = data.cookiesBrowser || '';
+        }
+      }
+    } catch {
+      // backend unreachable — keep the default (off)
+    }
+    el.settingsModal.style.display = 'flex';
+  }
+
+  function closeSettingsModal() {
+    el.settingsModal.style.display = 'none';
+    el.settingsSaved.style.display = 'none';
+  }
+
+  // Dot on the settings gear when browser cookies are enabled
+  async function refreshSettingsBadge() {
+    if (!el.settingsDot) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/settings`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const v = String(data.cookiesBrowser || '').trim();
+      el.settingsDot.style.display = v ? '' : 'none';
+      if (el.settingsBtn) {
+        el.settingsBtn.title = v
+          ? `Settings · cookies: ${v.charAt(0).toUpperCase() + v.slice(1)}`
+          : 'Settings';
+      }
+    } catch {
+      // backend unreachable — leave the badge off
+    }
+  }
+
+  async function saveSettings() {
+    const value = el.cookiesBrowserSelect.value;
+    el.settingsSaved.style.display = 'none';
+    try {
+      const res = await fetch(`${API_BASE}/api/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cookiesBrowser: value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to save settings');
+      el.settingsSaved.textContent = 'Saved';
+      el.settingsSaved.classList.remove('error');
+      el.settingsSaved.style.display = '';
+      refreshSettingsBadge();
+      setTimeout(closeSettingsModal, 900);
+    } catch (err) {
+      el.settingsSaved.textContent = err.message || 'Failed to save settings';
+      el.settingsSaved.classList.add('error');
+      el.settingsSaved.style.display = '';
+    }
+  }
+
+  if (el.settingsBtn) el.settingsBtn.addEventListener('click', openSettingsModal);
+  if (el.settingsModalClose) el.settingsModalClose.addEventListener('click', closeSettingsModal);
+  if (el.settingsCancelBtn) el.settingsCancelBtn.addEventListener('click', closeSettingsModal);
+  if (el.settingsSaveBtn) el.settingsSaveBtn.addEventListener('click', saveSettings);
+  el.settingsModal.addEventListener('click', (e) => {
+    if (e.target === el.settingsModal) closeSettingsModal();
+  });
+
   // ── Keyboard Shortcut: Escape = reset / close modal ─
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (el.updateModal && el.updateModal.style.display !== 'none') {
       closeUpdateModal();
+      return;
+    }
+    if (el.settingsModal && el.settingsModal.style.display !== 'none') {
+      closeSettingsModal();
       return;
     }
     if (!state.isDownloading) {
@@ -1241,4 +1349,7 @@
 
   // ── Silent update check: show the dot if a release is newer ──
   checkForUpdate(true);
+
+  // ── Silent settings load: dot on the gear when cookies are enabled ──
+  refreshSettingsBadge();
 })();
