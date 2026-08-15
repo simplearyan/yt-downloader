@@ -256,7 +256,7 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
 .section-sub { text-align: center; color: var(--muted); margin-bottom: 44px; }
 /* Sections without a sub-title: keep the heading clearly separated from its cards */
 .section-title + .features-grid,
-.section-title + .steps-grid,
+.section-title + .steps,
 .section-title + .faq-list { margin-top: 24px; }
 
 /* ---------- Cards / grids ---------- */
@@ -371,24 +371,106 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
   background: var(--card);
 }
 
-/* ---------- Steps ---------- */
-.steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.step { padding: 34px 28px; text-align: center; }
-.step h3 { font-size: 17px; }
-.step p { font-size: 14.5px; color: var(--muted); margin: 0; }
+/* ---------- Steps (horizontal timeline on desktop) ---------- */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  counter-reset: step;
+}
+.step {
+  position: relative;
+  text-align: center;
+  padding-top: 8px;
+}
+.step::before {
+  /* connector line between the icon nodes */
+  content: "";
+  position: absolute;
+  top: 40px;
+  left: -20px;
+  right: 50%;
+  height: 2px;
+  background: var(--border-strong);
+}
+.step:first-child::before { display: none; }
 .step-icon {
-  width: 52px;
-  height: 52px;
-  margin: 0 auto 18px;
-  border-radius: 16px;
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 22px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   background: var(--accent);
   box-shadow: none;
+  border: 6px solid var(--bg);
+  z-index: 1;
 }
-.step-icon .lucide { width: 23px; height: 23px; }
+.step-num {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-text);
+  background: var(--card);
+  border: 1px solid var(--accent);
+}
+.step-icon .lucide { width: 28px; height: 28px; }
+.step h3 { font-size: 17px; margin-bottom: 8px; }
+.step p { font-size: 14.5px; color: var(--muted); margin: 0; max-width: 260px; margin-inline: auto; }
+
+@media (max-width: 768px) {
+  /* vertical timeline: left rail + content */
+  .steps {
+    grid-template-columns: 1fr;
+    gap: 0;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .step {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    grid-template-areas:
+      "icon title"
+      "icon body";
+    column-gap: 20px;
+    text-align: left;
+    padding: 0 0 36px;
+    position: relative;
+  }
+  .step:last-child { padding-bottom: 0; }
+  .step::before {
+    top: 0;
+    bottom: 0;
+    left: 40px;
+    right: auto;
+    width: 2px;
+    height: auto;
+  }
+  .step:first-child::before { display: block; }
+  .step-icon {
+    grid-area: icon;
+    margin: 0;
+    width: 80px;
+    height: 80px;
+  }
+  .step h3 { grid-area: title; align-self: end; margin: 0 0 6px; }
+  .step p { grid-area: body; max-width: none; margin: 0; }
+}
 
 /* ---------- FAQ ---------- */
 .faq-list { display: flex; flex-direction: column; gap: 14px; max-width: 720px; margin: 0 auto; }
@@ -431,7 +513,6 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
   .header-nav { display: none; }
   .hero { padding: 68px 0 60px; }
   .section { padding: 64px 0; }
-  .steps-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 520px) {
