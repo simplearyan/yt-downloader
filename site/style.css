@@ -172,12 +172,19 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
   background: var(--header-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
 }
 .header-inner { display: flex; align-items: center; gap: 22px; height: 60px; }
 
 .brand { display: inline-flex; align-items: center; color: var(--text); text-decoration: none !important; }
-.brand-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; color: var(--text); white-space: nowrap; }
+.brand-name {
+  font-family: "Space Grotesk", var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  white-space: nowrap;
+}
+.brand-accent { color: var(--accent); }
 
 .header-nav { display: flex; gap: 26px; margin-left: 12px; }
 .header-nav a {
@@ -192,6 +199,13 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
 
 .header-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .header-actions .btn { margin-left: 8px; }
+
+/* Header Download CTA: neutral inverted button — dark on light, white on dark */
+.btn-header-download {
+  background: var(--text);
+  color: var(--bg);
+}
+.btn-header-download:hover { opacity: 0.85; }
 
 /* ---------- Hero ---------- */
 .hero { position: relative; padding: 96px 0 80px; text-align: center; overflow: hidden; }

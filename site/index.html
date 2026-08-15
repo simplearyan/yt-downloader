@@ -43,8 +43,8 @@
   <!-- Load fonts asynchronously so they don't block first paint. display=optional
      means the webfont is used only when it arrives instantly; otherwise the system
      fallback stays — no visible text swap/flicker on refresh. -->
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=optional" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" /></noscript>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@600;700&display=optional" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" /></noscript>
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/svg+xml" href="./assets/logo.svg" />
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
@@ -68,7 +68,7 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="#top">
-        <span class="brand-name">YouTube Downloader</span>
+        <span class="brand-name">YouTube <span class="brand-accent">Downloader</span></span>
       </a>
       <nav class="header-nav" aria-label="Primary">
         <a href="#features">Features</a>
@@ -79,7 +79,7 @@
       <div class="header-actions">
         <a class="icon-btn" href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener" aria-label="View source on GitHub" title="View source on GitHub"><svg class="lucide icon-github" aria-hidden="true"><use href="#github"></use></svg></a>
         <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle light/dark mode" title="Toggle light/dark mode"><svg class="lucide icon-sun" aria-hidden="true"><use href="#lucide-sun"></use></svg><svg class="lucide icon-moon" aria-hidden="true"><use href="#lucide-moon"></use></svg></button>
-        <a id="headerDownload" class="btn btn-primary btn-sm" href="#downloads" aria-label="Download"><svg class="lucide" aria-hidden="true"><use href="#lucide-download"></use></svg><span class="btn-label">Download</span></a>
+        <a id="headerDownload" class="btn btn-header-download btn-sm" href="#downloads" aria-label="Download"><svg class="lucide" aria-hidden="true"><use href="#lucide-download"></use></svg><span class="btn-label">Download</span></a>
       </div>
     </div>
   </header>
