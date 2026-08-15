@@ -1,3 +1,6 @@
+#[cfg(not(debug_assertions))]
+use tauri::Manager;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -25,7 +28,7 @@ pub fn run() {
         #[cfg(not(debug_assertions))]
         {
           use std::sync::Mutex;
-          if let Some(child) = _app_handle
+          if let Some(mut child) = _app_handle
             .state::<Mutex<Option<std::process::Child>>>()
             .inner()
             .lock()
@@ -44,7 +47,7 @@ pub fn run() {
 /// retries are exhausted — this is never fatal for the app itself.
 #[cfg(not(debug_assertions))]
 fn start_backend(app: &tauri::AppHandle) -> tauri::Result<()> {
-  use std::process::{Child, Command};
+  use std::process::Command;
   use std::sync::Mutex;
 
   // Node on PATH?
