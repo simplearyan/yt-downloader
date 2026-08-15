@@ -189,6 +189,22 @@ body {
   height: 20px;
 }
 
+/* Update-available indicator dot on the header update icon */
+.app-bar .icon-btn .update-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  border: 2px solid var(--color-background);
+}
+
+.app-bar .icon-btn {
+  position: relative;
+}
+
 /* Theme toggle: show the sun in dark mode (click → light), moon in light mode */
 [data-theme="dark"] .icon-sun { display: block; }
 [data-theme="dark"] .icon-moon { display: none; }

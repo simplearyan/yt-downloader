@@ -80,6 +80,7 @@
     updateModalClose: $('#updateModalClose'),
     updateNotNowBtn: $('#updateNotNowBtn'),
     updateDownloadBtn: $('#updateDownloadBtn'),
+    updateDot: $('#updateDot'),
   };
 
   // ── Theme ───────────────────────────────────────────
@@ -1043,6 +1044,16 @@
     el.updateModal.style.display = 'none';
   }
 
+  function showUpdateDot() {
+    if (el.updateDot) el.updateDot.style.display = 'block';
+    if (el.updateBtn) el.updateBtn.title = 'An update is available';
+  }
+
+  function hideUpdateDot() {
+    if (el.updateDot) el.updateDot.style.display = 'none';
+    if (el.updateBtn) el.updateBtn.title = 'Check for updates';
+  }
+
   function renderUpdateState(state, latest) {
     const body = el.updateModalBody;
     let icon, title, desc, html = '';
@@ -1085,8 +1096,8 @@
     body.innerHTML = html;
   }
 
-  async function checkForUpdate() {
-    openUpdateModal();
+  async function checkForUpdate(silent) {
+    if (!silent) openUpdateModal();
     try {
       // /releases/latest 404s when every release is a prerelease, so use the
       // list endpoint and take the newest non-draft release (prereleases included).
@@ -1097,17 +1108,21 @@
       if (!latest || latest.draft) throw new Error('no release');
       const latestV = (latest.tag_name || '').replace(/^v/i, '');
       const curV = APP_VERSION.replace(/^v/i, '');
-      if (latestV && latestV !== curV) {
-        renderUpdateState('available', latest);
-      } else {
-        renderUpdateState('uptodate', latest);
+      const available = !!(latestV && latestV !== curV);
+      // Dot indicator reflects availability; modal only opens on manual click
+      if (available) showUpdateDot();
+      else hideUpdateDot();
+      if (!silent) {
+        if (available) renderUpdateState('available', latest);
+        else renderUpdateState('uptodate', latest);
       }
     } catch (err) {
-      renderUpdateState('error');
+      hideUpdateDot();
+      if (!silent) renderUpdateState('error');
     }
   }
 
-  if (el.updateBtn) el.updateBtn.addEventListener('click', checkForUpdate);
+  if (el.updateBtn) el.updateBtn.addEventListener('click', () => checkForUpdate(false));
   if (el.updateModalClose) el.updateModalClose.addEventListener('click', closeUpdateModal);
   if (el.updateNotNowBtn) el.updateNotNowBtn.addEventListener('click', closeUpdateModal);
   el.updateModal.addEventListener('click', (e) => {
@@ -1130,4 +1145,7 @@
 
   // ── Focus the URL input on first load ───────────────
   el.urlInput.focus();
+
+  // ── Silent update check: show the dot if a release is newer ──
+  checkForUpdate(true);
 })();
