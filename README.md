@@ -67,7 +67,7 @@ Most web downloaders re-encode videos on their servers with cheap settings — t
 
 > **"Windows protected your PC"?** That's SmartScreen — installers are unsigned, so Windows flags the *publisher*, not your code. Click **More info → Run anyway**. Optional Azure Artifact Signing is wired into the workflow (see [docs/AZURE-CODE-SIGNING.md](docs/AZURE-CODE-SIGNING.md)) — once the secrets are configured, builds come out signed and the warning goes away.
 
-**⚠️ Beta status:** the packaged installers currently ship the **UI shell** — the download backend is ported to Rust in Phase 2 of the plan ([docs/TAURI-APP-PLAN.md](docs/TAURI-APP-PLAN.md)). For full downloads today, run from source below.
+**⚠️ Beta status:** packaged installers now bundle the Express backend and auto-start it when the app launches — but this stopgap needs **Node.js 18+ installed** on the machine ([docs/PACKAGED-APP-BACKEND-PLAN.md](docs/PACKAGED-APP-BACKEND-PLAN.md)). If Node isn't found, the app shows a clear message. The final fix is a Rust backend baked into the app (no Node needed) — tracked in the plan above.
 
 ### Run from source
 
@@ -198,7 +198,7 @@ youtube-downloader/
 
 **Formats load slowly the very first time** — the first fetch after server start warms up yt-dlp caches (a background warm-up runs automatically on boot); repeat loads are served instantly from the in-memory cache.
 
-**App window opens but downloads fail** — you're likely on a packaged (beta) build whose backend isn't ported yet; run `npm run tauri:dev` instead, or check the server is on :3001.
+**App window opens but searches fail with "Couldn't reach the app's backend"** — the packaged app needs Node.js 18+ installed (stopgap backend). Install Node from [nodejs.org](https://nodejs.org), relaunch, or use the web app. The Rust backend in the works removes this requirement.
 
 ---
 

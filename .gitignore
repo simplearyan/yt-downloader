@@ -31,3 +31,6 @@ Thumbs.db
 # Tauri build output
 src-tauri/target/
 .tmp/
+
+# Packaged-app backend staging (built by prepare:backend)
+src-tauri/backend/

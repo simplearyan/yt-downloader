@@ -8,7 +8,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ── Config ──────────────────────────────────────────────────────────────────
-const DOWNLOADS_DIR = path.join(__dirname, 'downloads');
+// When spawned as the packaged-app backend, __dirname points at the bundled
+// resource dir — resolve real paths from env overrides instead.
+const APP_ROOT = process.env.APP_ROOT || (process.pkg ? path.dirname(process.execPath) : __dirname);
+const DOWNLOADS_DIR = process.env.DOWNLOADS_DIR || path.join(APP_ROOT, 'downloads');
+const SERVE_STATIC = process.env.SERVE_STATIC !== '0';
 const YT_DLP = 'yt-dlp';
 const MAX_FILE_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
@@ -19,7 +23,18 @@ if (!fs.existsSync(DOWNLOADS_DIR)) {
 
 // ── Middleware ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+// CORS for the packaged Tauri app: its webview (tauri:// / http://tauri.localhost
+// origin) calls the local backend cross-origin. A no-op in web mode.
+app.use((req, res, next) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+if (SERVE_STATIC) {
+  app.use(express.static(path.join(APP_ROOT, 'public')));
+}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -662,9 +677,11 @@ app.get('/api/download/:id', (req, res) => {
 });
 
 // ── Serve SPA (catch-all) ──────────────────────────────────────────────────
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+if (SERVE_STATIC) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(APP_ROOT, 'public', 'index.html'));
+  });
+}
 
 // ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {

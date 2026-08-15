@@ -25,7 +25,8 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "description": "Download YouTube videos as original untouched streams (MP4 & MP3) for video editing — free, powered by yt-dlp.",
+    "resources": ["backend"],
+    "longDescription": "Download YouTube videos as original untouched streams (MP4 & MP3) for video editing — free, powered by yt-dlp.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

@@ -1,17 +1,18 @@
 {
   "name": "youtube-downloader",
   "version": "1.0.0",
-  "description": "Download YouTube videos as original untouched streams (MP4 & MP3) for video editing \u2014 free, powered by yt-dlp, with a Windows desktop app and web UI.",
+  "description": "Download YouTube videos as original untouched streams (MP4 & MP3) for video editing — free, powered by yt-dlp, with a Windows desktop app and web UI.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:dev": "npm run prepare:backend && tauri dev",
+    "tauri:build": "npm run prepare:backend && tauri build",
+    "prepare:backend": "node scripts/prepare-backend.js"
   },
   "dependencies": {
-    "express": "^4.21.0"
+    "express": "^4.22.2"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4"

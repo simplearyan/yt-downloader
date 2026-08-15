@@ -17,6 +17,12 @@
   const APP_VERSION = '0.9.0-alpha';
   const REPO = 'simplearyan/yt-downloader';
 
+  // In the packaged Tauri app the page is served from a tauri:// origin and the
+  // backend runs as a local process on 127.0.0.1:3021; the web app talks to the
+  // same origin it is served from.
+  const IS_TAURI = location.protocol.startsWith('tauri') || location.hostname.endsWith('.tauri.localhost');
+  const API_BASE = IS_TAURI ? 'http://127.0.0.1:3021' : '';
+
   function loadPref(key, fallback) {
     try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback; } catch { return fallback; }
   }
@@ -472,6 +478,36 @@
     renderCurrentTab();
   });
 
+  // Fetch with retry — the packaged app's backend can still be booting when the
+  // first search fires (Node startup + Express bind). Retries connection errors
+  // and stray HTML responses (Tauri's asset server returns index.html when the
+  // backend isn't answering yet).
+  async function fetchWithRetry(url, options, { retries = 8, delayMs = 500 } = {}) {
+    let lastErr;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await fetch(url, options);
+        const type = (res.headers.get('content-type') || '').toLowerCase();
+        if (type.includes('text/html') && API_BASE) {
+          lastErr = new Error(`Backend not ready yet (attempt ${attempt + 1}/${retries + 1})`);
+        } else {
+          return res;
+        }
+      } catch (err) {
+        lastErr = err;
+      }
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+    if (API_BASE) {
+      lastErr = new Error(
+        "Couldn't reach the app's backend. This beta build needs Node.js installed — " +
+        'install it from nodejs.org, then relaunch. (Or use the web app at simplearyan.github.io/yt-downloader.)'
+      );
+      lastErr.backendDown = true;
+    }
+    throw lastErr;
+  }
+
   // ── Fetch Video Info (Two-Phase) ───────────────────
   async function fetchVideoInfo() {
     if (!state.url || state.isFetching) return;
@@ -488,7 +524,7 @@
 
     try {
       // ── Phase 1: Quick fetch — metadata only (~1 second) ──
-      const quickResponse = await fetch(`/api/info/quick?url=${encodedUrl}`);
+      const quickResponse = await fetchWithRetry(`${API_BASE}/api/info/quick?url=${encodedUrl}`);
 
       if (quickResponse.ok) {
         const quickInfo = await quickResponse.json();
@@ -509,7 +545,7 @@
       }
 
       // ── Phase 2: Full fetch — all formats (background) ──
-      const fullResponse = await fetch(`/api/info?url=${encodedUrl}`);
+      const fullResponse = await fetchWithRetry(`${API_BASE}/api/info?url=${encodedUrl}`);
 
       if (!fullResponse.ok) {
         if (!quickSucceeded) {
@@ -899,7 +935,7 @@
     el.progressSize.textContent = '—';
 
     try {
-      const response = await fetch('/api/download', {
+      const response = await fetch(`${API_BASE}/api/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -928,7 +964,7 @@
 
   // ── Progress via SSE ────────────────────────────────
   function listenToProgress(downloadId) {
-    const evtSource = new EventSource(`/api/progress/${downloadId}`);
+    const evtSource = new EventSource(`${API_BASE}/api/progress/${downloadId}`);
 
     let sseTimeout = setTimeout(handleTimeout, 30000);
     let isDone = false;
@@ -1023,7 +1059,7 @@
   function triggerFileDownload(id) {
     if (!id) return;
     const a = document.createElement('a');
-    a.href = `/api/download/${id}`;
+    a.href = `${API_BASE}/api/download/${id}`;
     a.download = '';
     document.body.appendChild(a);
     a.click();
