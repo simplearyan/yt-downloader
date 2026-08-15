@@ -204,6 +204,17 @@ body {
   padding: 28px 16px 48px;
 }
 
+/* First-open landing: no history and nothing loaded yet → center the search bar */
+.main-content.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-content.empty-state .container {
+  width: 100%;
+}
+
 .container {
   max-width: 840px;
   margin: 0 auto;

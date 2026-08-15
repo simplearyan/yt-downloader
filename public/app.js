@@ -68,6 +68,7 @@
     searchHistory: $('#searchHistory'),
     codecSubTabs: $('#codecSubTabs'),
     autoDownloadToggle: $('#autoDownloadToggle'),
+    mainContent: $('.main-content'),
   };
 
   // ── Theme ───────────────────────────────────────────
@@ -98,12 +99,27 @@
     elements.forEach((el) => {
       if (el) el.style.display = '';
     });
+    updateEmptyState();
   }
 
   function hide(...elements) {
     elements.forEach((el) => {
       if (el) el.style.display = 'none';
     });
+    updateEmptyState();
+  }
+
+  // ── Empty-state landing ────────────────────────────
+  // On first open (no history, nothing loaded yet) the search bar is
+  // centered in the viewport. As soon as history exists or any card
+  // (loading/video/format/progress/error) becomes visible, we return
+  // to the normal top-aligned flow.
+  function updateEmptyState() {
+    if (!el.mainContent) return;
+    const hasHistory = getHistory().length > 0;
+    const busy = [el.loadingCard, el.videoCard, el.formatCard, el.progressCard, el.errorCard]
+      .some((card) => card && card.style.display !== 'none');
+    el.mainContent.classList.toggle('empty-state', !hasHistory && !busy);
   }
 
   function formatDuration(seconds) {
@@ -233,6 +249,7 @@
 
   // Load history on startup
   renderHistory();
+  updateEmptyState();
 
   // ── Search History (localStorage) ────────────────────
   const SEARCHES_KEY = 'ytdl_searches';
@@ -1007,4 +1024,7 @@
       el.urlInput.focus();
     }
   });
+
+  // ── Focus the URL input on first load ───────────────
+  el.urlInput.focus();
 })();
