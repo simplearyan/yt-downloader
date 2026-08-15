@@ -675,5 +675,5 @@ mod tests {
     assert_eq!(a.unwrap().status(), StatusCode::OK);
     assert_eq!(b.unwrap().status(), StatusCode::OK);
   }
-}
 
+}

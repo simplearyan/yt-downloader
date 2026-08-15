@@ -1,4 +1,5 @@
 #[cfg(not(debug_assertions))]
+#[allow(dead_code)] // Rust backend parked 2026-08-15 - see PACKAGED-APP-BACKEND-PLAN.md section 7
 mod backend;
 
 #[cfg(not(debug_assertions))]
@@ -58,39 +59,17 @@ fn node_command() -> std::process::Command {
   cmd
 }
 
-/// Start the app backend. Preference: the Rust backend on :3021, with the
-/// bundled Node stopgap on :3022 backfilling routes that aren't ported yet.
-/// If the Rust server can't bind, fall back to Node directly on :3021.
-/// The Node child (if any) is always managed so the exit handler can kill it.
+/// Start the app backend. NOTE (2026-08-15): the Rust backend is temporarily
+/// parked - axum::serve wedges (accepts connections but never answers) when
+/// its tokio runtime is built via Builder + block_on inside a spawned thread;
+/// reproduced in isolation. Node answers in ~0.5s, so ship on Node :3021 until
+/// the tokio/hyper interaction is understood (plan doc section 7).
 #[cfg(not(debug_assertions))]
 fn start_backend(app: &tauri::AppHandle) -> tauri::Result<()> {
   use std::sync::Mutex;
 
-  let node_ok = node_command()
-    .arg("--version")
-    .output()
-    .map(|out| out.status.success())
-    .unwrap_or(false);
-
-  let child = match backend::spawn(backend::PORT, node_ok.then_some(backend::NODE_PROXY_PORT)) {
-    Ok(()) => {
-      eprintln!(
-        "[backend] Rust backend on 127.0.0.1:{} (node backfill: {})",
-        backend::PORT,
-        if node_ok { "enabled" } else { "disabled" }
-      );
-      if node_ok {
-        spawn_node_backend(app, backend::NODE_PROXY_PORT)
-      } else {
-        None
-      }
-    }
-    Err(e) => {
-      eprintln!("[backend] Rust backend failed to start ({e}) — falling back to Node on :3021");
-      spawn_node_backend(app, backend::PORT)
-    }
-  };
-
+  eprintln!("[backend] Node backend on 127.0.0.1:{}", backend::PORT);
+  let child = spawn_node_backend(app, backend::PORT);
   app.manage(Mutex::new(child));
   Ok(())
 }

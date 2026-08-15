@@ -484,20 +484,26 @@
   // first search fires (Node startup + Express bind). Retries connection errors
   // and stray HTML responses (Tauri's asset server returns index.html when the
   // backend isn't answering yet).
-  async function fetchWithRetry(url, options, { retries = 8, delayMs = 500 } = {}) {
+  async function fetchWithRetry(url, options, { retries = 8, delayMs = 500, timeoutMs = 20000 } = {}) {
     let lastErr;
     for (let attempt = 0; attempt <= retries; attempt++) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
       try {
-        const res = await fetch(url, options);
+        const res = await fetch(url, { ...options, signal: ctrl.signal });
         const type = (res.headers.get('content-type') || '').toLowerCase();
         if (type.includes('text/html') && API_BASE) {
           lastErr = new Error(`Backend not ready yet (attempt ${attempt + 1}/${retries + 1})`);
         } else {
+          clearTimeout(timer);
           return res;
         }
       } catch (err) {
-        lastErr = err;
+        lastErr = err && err.name === 'AbortError'
+          ? new Error(`Backend timed out after ${Math.round(timeoutMs / 1000)}s (attempt ${attempt + 1}/${retries + 1})`)
+          : err;
       }
+      clearTimeout(timer);
       await new Promise((r) => setTimeout(r, delayMs));
     }
     if (API_BASE) {
@@ -940,6 +946,7 @@
       const response = await fetch(`${API_BASE}/api/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(30000),
         body: JSON.stringify({
           url: state.url,
           formatId: state.selectedFormatId,

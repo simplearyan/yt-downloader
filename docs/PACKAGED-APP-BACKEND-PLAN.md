@@ -1,7 +1,7 @@
 # Packaged App Backend Plan — how to make the installed app actually download
 
 **Date:** 2026-08-15
-**Status:** In progress — Option C stopgap shipped (v0.2.1+); Option B Phase 0–2 done (Rust backend on :3021 with Node backfill for downloads/progress/file-serve)
+**Status:** Option B PARKED 2026-08-15 (axum::serve wedges in-process — see §7); shipping Node on :3021 (v0.2.4-beta); Phases 0–2 code kept in-tree
 
 ---
 
@@ -189,3 +189,13 @@ All options share two small frontend/backend prerequisites (do them first):
   doesn't clash.
 - **Binary size creep**: `reqwest`/`tokio`/`axum` add weight — acceptable at
   +2–5 MB; strip + LTO in release to stay lean.
+
+---
+
+## 7. Status update — 2026-08-15: Rust backend parked
+
+**The Rust server wedges in the packaged process.** `axum::serve` accepts TCP connections but never answers, on every runtime pattern tried (multi-thread and current-thread, `Builder` + `block_on` in a spawned thread, direct-await and `tokio::spawn`). Reproduced in isolation with a minimal router (HTTP 000 after 6–45s, while a hand-rolled raw-socket accept loop on the identical runtime answers in <1 ms and the bundled Node backend answers in ~0.5 s).
+
+- **Decision:** v0.2.4-beta ships **Node on :3021 as the app backend** (the proven Option C path, with the v0.2.3 launch fixes). `start_backend` in `lib.rs` now spawns Node directly; `backend.rs` (Phases 1–2, quick-info + full formats, cache + dedupe, passing live tests) stays in the tree behind `#[allow(dead_code)]`.
+- **Frontend hardening:** `fetchWithRetry` now aborts after 20 s per attempt and the download POST after 30 s — the UI can never spin forever on a silent backend; it shows a clear timeout error instead.
+- **To resume Option B:** debug the tokio/hyper interaction (start with `axum::serve` on a `#[tokio::test]` runtime vs `Builder`+`block_on` — the former works, the latter wedges; suspect the runtime construction inside `std::thread::spawn`), then flip `start_backend` back to `backend::spawn`. Phases 0–2 remain valid; Phase 3 (downloads/progress/file-serve in Rust) is deferred until the wedge is fixed.
