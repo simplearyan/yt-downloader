@@ -1,27 +1,68 @@
-# YouTube Downloader
+# 🎬 YouTube Downloader
 
-Download YouTube videos **reliably for video editing** — original untouched streams, perfect seeking, no re-encoding.
+**Download YouTube videos as original, untouched streams — MP4 & MP3 — free, open source, and built for video editing.**
 
-Built on **[yt-dlp](https://github.com/yt-dlp/yt-dlp)**, the gold standard for YouTube downloading. It pulls the original streams straight from YouTube instead of re-encoding them on a server (which is what web downloaders like vidssave.com do — and why their files have broken seeking and blank frames in editors).
+Paste any YouTube link, pick a format, download. No re-encoding, no broken seek tables, no ads, no sign-up, no limits. Built on **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** — the gold standard for YouTube downloading — with a clean, modern UI in both a **Windows desktop app** and a **browser web app**.
 
-Two ways to use it:
+[![Latest Release](https://img.shields.io/github/v/release/simplearyan/yt-downloader?include_prereleases&sort=semver&label=release&color=8b6ffb)](https://github.com/simplearyan/yt-downloader/releases)
+[![Release Downloads](https://img.shields.io/github/downloads/simplearyan/yt-downloader/total?label=downloads&color=8b6ffb)](https://github.com/simplearyan/yt-downloader/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Web-242424?logo=windows)](https://simplearyan.github.io/yt-downloader/)
+[![Powered by yt-dlp](https://img.shields.io/badge/powered%20by-yt--dlp-8b6ffb)](https://github.com/yt-dlp/yt-dlp)
 
-| | **Desktop app** (Windows) | **Web app** (browser) |
-|---|---|---|
-| How | Tauri shell wrapping the same UI | Express + static frontend |
-| Run | `npm run tauri:dev` (from source) | `npm start` → http://localhost:3001 |
-| Installers | GitHub **Releases** (`.exe` / `.msi`) | — |
+> 🚀 **Live download site:** [simplearyan.github.io/yt-downloader](https://simplearyan.github.io/yt-downloader/) — browse versions and grab the installer right from the browser.
+
+---
+
+## Table of contents
+
+- [Why this downloader](#why-this-downloader)
+- [✨ Features](#-features)
+- [🖥️ Desktop app](#-desktop-app)
+- [🌐 Web app](#-web-app)
+- [Requirements](#requirements)
+- [Releases & CI](#releases--ci)
+- [The download formats (yt-dlp reference)](#the-download-formats-yt-dlp-reference)
+- [Why not web downloaders?](#why-not-web-downloaders)
+- [File structure](#file-structure)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+
+---
+
+## Why this downloader
+
+Most web downloaders re-encode videos on their servers with cheap settings — that **corrupts the seek table** (the metadata a player uses to find each frame), so files freeze and glitch in editors. This app pulls the **original untouched streams straight from YouTube** with yt-dlp, giving you:
+
+- ✅ **Original quality** — no re-encoding, no generational loss
+- ✅ **Perfect seeking** — clean, editor-friendly MP4 files
+- ✅ **Free forever** — no ads, no sign-up, no daily limits
+- ✅ **Works offline** — the web app is self-contained; the desktop app needs no server
+
+---
+
+## ✨ Features
+
+| | |
+|---|---|
+| 🎞️ **MP4 & MP3** | Best video+audio merged MP4, H.264 MP4, or audio-only MP3 — plus every individual format |
+| ⚡ **Fast & reliable** | Two-phase loading (video card appears in ~0.4s), server-side format cache for instant repeat loads, background yt-dlp warm-up on start |
+| 🔎 **Recent searches** | Search history dropdown with thumbnails, auto-fill, and clear option |
+| 🌙 **Light & dark themes** | Clean CapCut-inspired neutral gray palettes (WCAG AA contrast) |
+| 🔔 **Update checker** | "Check for updates" modal + a dot indicator on the header when a new release is out |
+| 🖼️ **Rich video card** | Thumbnail, title, uploader, duration, views — then a clean format picker with codec filters |
+| 📊 **Live progress** | Real-time download progress streaming (speed, ETA, %) |
+| 💾 **Save anywhere** | Downloads land in `downloads/`; old files auto-cleaned after 2 hours |
 
 ---
 
 ## 🖥️ Desktop app
 
-### Install from GitHub Releases
+### Install (Windows)
 
-1. Open **Releases** on the repo (e.g. the `v0.1.1-beta` release).
+1. Grab the latest installer from the **[download site](https://simplearyan.github.io/yt-downloader/)** or **[GitHub Releases](https://github.com/simplearyan/yt-downloader/releases)** (e.g. the `v0.2.0-beta` release).
 2. Download either:
-   - `*.exe` — NSIS installer (double-click to install), or
-   - `*.msi` — MSI package (silent install: `msiexec /i <file>.msi`)
+   - **`*.exe`** — NSIS installer (double-click to install), or
+   - **`*.msi`** — MSI package (silent install: `msiexec /i <file>.msi`)
 3. Run it, paste a link, download.
 
 > **"Windows protected your PC"?** That's SmartScreen — installers are unsigned, so Windows flags the *publisher*, not your code. Click **More info → Run anyway**. Optional Azure Artifact Signing is wired into the workflow (see [docs/AZURE-CODE-SIGNING.md](docs/AZURE-CODE-SIGNING.md)) — once the secrets are configured, builds come out signed and the warning goes away.
@@ -77,6 +118,8 @@ git tag v1.0.0 && git push origin v1.0.0
 
 Or run it manually: **Actions → Build Windows Installer → Run workflow** (leave *ref* empty for the latest commit; no tag needed). Details: [docs/RELEASE-WORKFLOW-PLAN.md](docs/RELEASE-WORKFLOW-PLAN.md).
 
+The **download site** is deployed automatically to GitHub Pages from `site/` ([docs/DOWNLOAD-SITE-PLAN.md](docs/DOWNLOAD-SITE-PLAN.md)).
+
 ---
 
 ## The download formats (yt-dlp reference)
@@ -131,15 +174,14 @@ Web downloaders re-encode on their servers with cheap settings that **corrupt th
 ```
 youtube-downloader/
 ├── public/               ← Web UI (plain HTML/CSS/JS, no build step)
+├── site/                 ← Marketing/download landing page (GitHub Pages)
 ├── src-tauri/            ← Tauri desktop shell (Rust)
-├── .github/workflows/    ← build-tauri.yml — releases installer on v* tags
-├── server.js             ← Express backend (spawns yt-dlp)
+├── .github/workflows/
+│   ├── build-tauri.yml   ← builds Windows installer on v* tags
+│   └── pages.yml         ← deploys site/ + refreshes the release snapshot
+├── server.js             ← Express backend (spawns yt-dlp, format cache, warm-up)
 ├── downloads/            ← Downloaded videos go here (gitignored)
-├── docs/
-│   ├── TAURI-APP-PLAN.md       ← desktop-app conversion plan (phases)
-│   ├── RELEASE-WORKFLOW-PLAN.md ← CI / release pipeline
-│   └── AZURE-CODE-SIGNING.md   ← SmartScreen fix: optional code signing
-└── YOUTUBE-DOWNLOAD-GUIDE.md
+└── docs/                 ← plans & guides (see below)
 ```
 
 ---
@@ -154,4 +196,20 @@ youtube-downloader/
 
 **"HTTP Error 429"** — rate-limited. Wait a few minutes or add `--sleep-interval 5`.
 
+**Formats load slowly the very first time** — the first fetch after server start warms up yt-dlp caches (a background warm-up runs automatically on boot); repeat loads are served instantly from the in-memory cache.
+
 **App window opens but downloads fail** — you're likely on a packaged (beta) build whose backend isn't ported yet; run `npm run tauri:dev` instead, or check the server is on :3001.
+
+---
+
+## Documentation
+
+| Doc | What it covers |
+|-----|----------------|
+| [YOUTUBE-DOWNLOAD-GUIDE.md](YOUTUBE-DOWNLOAD-GUIDE.md) | End-to-end usage guide |
+| [docs/TAURI-APP-PLAN.md](docs/TAURI-APP-PLAN.md) | Desktop-app conversion plan (phases) |
+| [docs/RELEASE-WORKFLOW-PLAN.md](docs/RELEASE-WORKFLOW-PLAN.md) | CI / release pipeline |
+| [docs/DOWNLOAD-SITE-PLAN.md](docs/DOWNLOAD-SITE-PLAN.md) | Marketing/download site plan |
+| [docs/FORMAT-FETCH-COLD-START-PLAN.md](docs/FORMAT-FETCH-COLD-START-PLAN.md) | First-fetch performance analysis & fixes |
+| [docs/PROFESSIONAL-INSTALL-PLAN.md](docs/PROFESSIONAL-INSTALL-PLAN.md) | Making installs feel professional |
+| [docs/AZURE-CODE-SIGNING.md](docs/AZURE-CODE-SIGNING.md) | SmartScreen fix: optional code signing |

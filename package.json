@@ -1,7 +1,7 @@
 {
   "name": "youtube-downloader",
   "version": "1.0.0",
-  "description": "Download YouTube videos using yt-dlp with a Material Design UI",
+  "description": "Download YouTube videos as original untouched streams (MP4 & MP3) for video editing \u2014 free, powered by yt-dlp, with a Windows desktop app and web UI.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -15,5 +15,17 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4"
-  }
+  },
+  "keywords": [
+    "youtube",
+    "downloader",
+    "yt-dlp",
+    "mp4",
+    "mp3",
+    "video-downloader",
+    "video-editing",
+    "tauri",
+    "windows",
+    "open-source"
+  ]
 }
