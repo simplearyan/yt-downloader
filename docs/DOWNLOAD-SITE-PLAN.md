@@ -109,15 +109,14 @@ file — no redirects, no token.
 the rest collapse into an **"All versions"** accordion (each row: version, date,
 beta pill, exe/msi icon buttons).
 
-**Auto-update:** on page load, fetch the API. New tags show up automatically on the
-next visit. Cache the response in `localStorage` with a **15-min TTL** so repeat
-visits don't re-hit the API.
+**Auto-update:** the site renders from the same-origin **`site/releases.json`
+snapshot**, refreshed by CI on every deploy (pages.yml) **and after every release**
+(build-tauri.yml pushes a refreshed snapshot on tag builds). New tags appear on the
+site the moment the release CI finishes — **no runtime GitHub API calls**, so there
+are no rate limits, no cross-origin requests, and instant first paint.
 
-**Rate limit / fallback (important):** unauthenticated API = **60 req/hr per IP**.
-With caching that's fine for a marketing site, but plan a graceful degraded state:
-an **`site/releases.json` snapshot** committed by the deploy workflow (see §7) that
-the page uses first, then silently refreshes from the API when reachable. Empty/error
-state shows a friendly "releases unavailable" card instead of a broken section.
+**Fallback:** if the snapshot is unreachable, the page shows a friendly "releases
+unavailable" card with a direct link to GitHub Releases (no broken section).
 
 ---
 

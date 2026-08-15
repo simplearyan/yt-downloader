@@ -29,50 +29,19 @@ function initTheme() {
   });
 }
 
-/* ---------- Releases: data pipeline ---------- */
+/* ---------- Releases: data pipeline ----------
 
-const API_URL = 'https://api.github.com/repos/simplearyan/yt-downloader/releases?per_page=20';
-const CACHE_KEY = 'ytdl-releases';
-const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
-
-function readCache() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (!Array.isArray(data.releases) || Date.now() - data.fetchedAt > CACHE_TTL_MS) return null;
-    return data.releases;
-  } catch (e) {
-    return null;
-  }
-}
-
-function writeCache(releases) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ fetchedAt: Date.now(), releases }));
-  } catch (e) { /* storage full / unavailable — ignore */ }
-}
-
-async function fetchFromApi() {
-  const res = await fetch(API_URL, { headers: { Accept: 'application/vnd.github+json' } });
-  if (!res.ok) throw new Error('api ' + res.status);
-  return res.json();
-}
+Data source: the same-origin `releases.json` snapshot. It is refreshed by CI
+on every deploy and after every release (pages.yml + the build workflow), so
+no runtime GitHub API call is needed — no rate limits, no cross-origin
+requests, instant first paint. If the snapshot is unreachable, show the error
+card with a direct link to GitHub Releases.
+*/
 
 async function fetchSnapshot() {
   const res = await fetch('./releases.json');
   if (!res.ok) throw new Error('snapshot ' + res.status);
   return res.json();
-}
-
-/* Refresh in the background when we already have data to show.
-   Failures are silent — the visible data stays. */
-async function refreshQuietly() {
-  try {
-    const live = await fetchFromApi();
-    writeCache(live);
-    renderReleases(live);
-  } catch (e) { /* keep what we have */ }
 }
 
 /* ---------- Releases: rendering ---------- */
@@ -176,29 +145,11 @@ function renderError() {
 async function initReleases() {
   const el = document.getElementById('releases');
   if (!el) return;
-
-  // 1) Fresh cache → paint instantly, then refresh quietly in the background
-  const cached = readCache();
-  if (cached && cached.length) {
-    renderReleases(cached);
-    refreshQuietly();
-    return;
-  }
-
-  // 2) No cache → live API (then cache it)
   try {
-    const live = await fetchFromApi();
-    writeCache(live);
-    renderReleases(live);
-    return;
-  } catch (apiErr) {
-    // 3) API unreachable (offline / rate-limited) → committed snapshot
-    try {
-      const snap = await fetchSnapshot();
-      renderReleases(snap);
-    } catch (snapErr) {
-      renderError();
-    }
+    const snap = await fetchSnapshot();
+    renderReleases(snap);
+  } catch (e) {
+    renderError();
   }
 }
 
