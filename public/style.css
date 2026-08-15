@@ -14,7 +14,7 @@
 /* ── CSS Custom Properties ─────────────────────────── */
 :root {
   /* CapCut-style dark theme (default) — deep charcoal, violet accent */
-  --color-primary: #8b6ffb;
+  --color-primary: #b79df6;
   --color-on-primary: #ffffff;
   --color-primary-container: #3a2a6e;
   --color-on-primary-container: #e4dcff;
@@ -307,7 +307,7 @@ body {
 }
 
 .input::placeholder {
-  color: var(--color-outline);
+  color: var(--color-on-surface-variant);
 }
 
 .input-wrapper .btn {
@@ -694,7 +694,7 @@ body {
 .search-history-empty {
   padding: 16px 12px;
   font-size: 12px;
-  color: var(--color-outline);
+  color: var(--color-on-surface-variant);
   text-align: center;
 }
 
@@ -748,7 +748,7 @@ body {
 .search-history-item .lucide {
   width: 16px;
   height: 16px;
-  color: var(--color-outline);
+  color: var(--color-on-surface-variant);
   flex-shrink: 0;
 }
 
@@ -1214,7 +1214,7 @@ body {
 }
 
 .update-versions-arrow {
-  color: var(--color-outline);
+  color: var(--color-on-surface-variant);
 }
 
 .update-versions-arrow .lucide {
@@ -1246,7 +1246,7 @@ body {
   text-align: center;
   padding: 20px;
   font-size: 12px;
-  color: var(--color-outline);
+  color: var(--color-on-surface-variant);
 }
 
 .footer a {
