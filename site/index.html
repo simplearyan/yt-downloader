@@ -46,9 +46,23 @@
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/svg+xml" href="./assets/logo.svg" />
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
-  <script src="./assets/lucide.min.js" defer></script>
 </head>
 <body>
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="lucide-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></symbol>
+    <symbol id="lucide-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></symbol>
+    <symbol id="lucide-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"></path><path d="m8 6-6 6 6 6"></path></symbol>
+    <symbol id="lucide-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></symbol>
+    <symbol id="lucide-external-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></symbol>
+    <symbol id="lucide-film" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M7 3v18"></path><path d="M3 7.5h4"></path><path d="M3 12h18"></path><path d="M3 16.5h4"></path><path d="M17 3v18"></path><path d="M17 7.5h4"></path><path d="M17 16.5h4"></path></symbol>
+    <symbol id="lucide-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path></symbol>
+    <symbol id="lucide-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></symbol>
+    <symbol id="lucide-monitor-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.033 9.44a.647.647 0 0 1 0 1.12l-4.065 2.352a.645.645 0 0 1-.968-.56V7.648a.645.645 0 0 1 .967-.56z"></path><path d="M12 17v4"></path><path d="M8 21h8"></path><rect x="2" y="3" width="20" height="14" rx="2"></rect></symbol>
+    <symbol id="lucide-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path></symbol>
+    <symbol id="lucide-package" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></symbol>
+    <symbol id="lucide-shield-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></symbol>
+    <symbol id="lucide-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></symbol>
+  </svg>
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="#top">
@@ -62,9 +76,9 @@
         <a href="#faq">FAQ</a>
       </nav>
       <div class="header-actions">
-        <a class="icon-btn" href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener" aria-label="View source on GitHub" title="View source on GitHub"><i data-lucide="external-link"></i></a>
-        <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle light/dark mode" title="Toggle light/dark mode"><i data-lucide="sun"></i><i data-lucide="moon"></i></button>
-        <a id="headerDownload" class="btn btn-primary btn-sm" href="#downloads"><i data-lucide="download"></i>Download</a>
+        <a class="icon-btn" href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener" aria-label="View source on GitHub" title="View source on GitHub"><svg class="lucide" aria-hidden="true"><use href="#lucide-external-link"></use></svg></a>
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle light/dark mode" title="Toggle light/dark mode"><svg class="lucide" aria-hidden="true"><use href="#lucide-sun"></use></svg><svg class="lucide" aria-hidden="true"><use href="#lucide-moon"></use></svg></button>
+        <a id="headerDownload" class="btn btn-primary btn-sm" href="#downloads"><svg class="lucide" aria-hidden="true"><use href="#lucide-download"></use></svg>Download</a>
       </div>
     </div>
   </header>
@@ -78,8 +92,8 @@
         <h1 class="hero-title">Download YouTube videos <span class="grad-text">the reliable way</span></h1>
         <p class="hero-sub">Original untouched streams with perfect seeking — no re-encoding, no broken files. Built for video editing.</p>
         <div class="hero-actions">
-          <a id="heroDownload" class="btn btn-primary btn-lg" href="#downloads"><i data-lucide="download"></i>Download for Windows</a>
-          <a class="btn btn-ghost btn-lg" href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener"><i data-lucide="code"></i>View source</a>
+          <a id="heroDownload" class="btn btn-primary btn-lg" href="#downloads"><svg class="lucide" aria-hidden="true"><use href="#lucide-download"></use></svg>Download for Windows</a>
+          <a class="btn btn-ghost btn-lg" href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener"><svg class="lucide" aria-hidden="true"><use href="#lucide-code"></use></svg>View source</a>
         </div>
         <p class="hero-meta">Free &amp; open source · Built on yt-dlp · Windows 10/11</p>
       </div>
@@ -92,22 +106,22 @@
         <h2 class="section-title">Why use it</h2>
         <div class="features-grid">
           <article class="card feature">
-            <div class="feature-icon" aria-hidden="true"><i data-lucide="film"></i></div>
+            <div class="feature-icon" aria-hidden="true"><svg class="lucide" aria-hidden="true"><use href="#lucide-film"></use></svg></div>
             <h3>Original quality</h3>
             <p>Downloads the untouched source streams straight from YouTube — no server-side re-encode, no quality loss.</p>
           </article>
           <article class="card feature">
-            <div class="feature-icon" aria-hidden="true"><i data-lucide="monitor-play"></i></div>
+            <div class="feature-icon" aria-hidden="true"><svg class="lucide" aria-hidden="true"><use href="#lucide-monitor-play"></use></svg></div>
             <h3>Editor-friendly</h3>
             <p>Perfect seek tables mean scrubbing, trimming, and previews just work in your video editor.</p>
           </article>
           <article class="card feature">
-            <div class="feature-icon" aria-hidden="true"><i data-lucide="shield-check"></i></div>
+            <div class="feature-icon" aria-hidden="true"><svg class="lucide" aria-hidden="true"><use href="#lucide-shield-check"></use></svg></div>
             <h3>Free &amp; open source</h3>
             <p>No subscriptions, no watermarks, no limits. The code is on GitHub for anyone to audit.</p>
           </article>
           <article class="card feature">
-            <div class="feature-icon" aria-hidden="true"><i data-lucide="layers"></i></div>
+            <div class="feature-icon" aria-hidden="true"><svg class="lucide" aria-hidden="true"><use href="#lucide-layers"></use></svg></div>
             <h3>Playlists &amp; formats</h3>
             <p>Playlists, subtitles, audio-only, or capped resolution — pick the exact format you need.</p>
           </article>
@@ -132,17 +146,17 @@
         <h2 class="section-title">Three steps</h2>
         <div class="steps-grid">
           <article class="card step">
-            <div class="step-icon" aria-hidden="true"><i data-lucide="download"></i></div>
+            <div class="step-icon" aria-hidden="true"><svg class="lucide" aria-hidden="true"><use href="#lucide-download"></use></svg></div>
             <h3>Install the app</h3>
             <p>Download the installer and open it — no dev server, no terminal, no setup.</p>
           </article>
           <article class="card step">
-            <div class="step-icon" aria-hidden="true"><i data-lucide="link"></i></div>
+            <div class="step-icon" aria-hidden="true"><svg class="lucide" aria-hidden="true"><use href="#lucide-link"></use></svg></div>
             <h3>Paste a link</h3>
             <p>Drop in any YouTube video or playlist URL and let the app read it.</p>
           </article>
           <article class="card step">
-            <div class="step-icon" aria-hidden="true"><i data-lucide="check"></i></div>
+            <div class="step-icon" aria-hidden="true"><svg class="lucide" aria-hidden="true"><use href="#lucide-check"></use></svg></div>
             <h3>Download</h3>
             <p>Original-quality MP4 lands in your downloads folder, ready for the editor.</p>
           </article>
@@ -157,23 +171,23 @@
         <h2 class="section-title">Questions</h2>
         <div class="faq-list" id="faqList">
           <details class="card faq-item">
-            <summary><span>“Windows protected your PC” — what is that?</span><i data-lucide="chevron-down"></i></summary>
+            <summary><span>“Windows protected your PC” — what is that?</span><svg class="lucide" aria-hidden="true"><use href="#lucide-chevron-down"></use></svg></summary>
             <p>SmartScreen flags installers that aren't code-signed yet. It's the publisher that's unrecognized, not the app. Click <strong>More info → Run anyway</strong> to install. Code signing is on the roadmap — once it's live, the warning disappears.</p>
           </details>
           <details class="card faq-item">
-            <summary><span>Do I need yt-dlp or ffmpeg?</span><i data-lucide="chevron-down"></i></summary>
+            <summary><span>Do I need yt-dlp or ffmpeg?</span><svg class="lucide" aria-hidden="true"><use href="#lucide-chevron-down"></use></svg></summary>
             <p>Downloads are powered by <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">yt-dlp</a> and ffmpeg. When running from source, install them with <code>winget install yt-dlp</code> and <code>winget install ffmpeg</code>.</p>
           </details>
           <details class="card faq-item">
-            <summary><span>Is it really free?</span><i data-lucide="chevron-down"></i></summary>
+            <summary><span>Is it really free?</span><svg class="lucide" aria-hidden="true"><use href="#lucide-chevron-down"></use></svg></summary>
             <p>Yes — free and open source, forever. No account, no ads, no download limits.</p>
           </details>
           <details class="card faq-item">
-            <summary><span>Why not a web downloader like vidssave or y2mate?</span><i data-lucide="chevron-down"></i></summary>
+            <summary><span>Why not a web downloader like vidssave or y2mate?</span><svg class="lucide" aria-hidden="true"><use href="#lucide-chevron-down"></use></svg></summary>
             <p>Those re-encode videos on their servers with cheap settings that corrupt the seek table — files freeze and skip in editors. This app pulls the original streams, so seeking is perfect.</p>
           </details>
           <details class="card faq-item">
-            <summary><span>Which Windows versions are supported?</span><i data-lucide="chevron-down"></i></summary>
+            <summary><span>Which Windows versions are supported?</span><svg class="lucide" aria-hidden="true"><use href="#lucide-chevron-down"></use></svg></summary>
             <p>Windows 10 and 11 (64-bit). WebView2 — required by the app — is preinstalled on both.</p>
           </details>
         </div>
@@ -185,7 +199,7 @@
     <div class="container footer-inner">
       <span>© <span id="year">2026</span> YouTube Downloader</span>
       <nav class="footer-nav" aria-label="Footer">
-        <a href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener"><i data-lucide="external-link"></i>GitHub</a>
+        <a href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener"><svg class="lucide" aria-hidden="true"><use href="#lucide-external-link"></use></svg>GitHub</a>
         <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">Powered by yt-dlp</a>
       </nav>
     </div>

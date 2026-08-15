@@ -6,13 +6,6 @@
    ============================================================ */
 'use strict';
 
-/* ---------- Icons (local vendored lucide, from StudioPro) ---------- */
-function initIcons() {
-  try {
-    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
-  } catch (e) { /* icons are decorative — never block on them */ }
-}
-
 /* ---------- Theme toggle ---------- */
 function initTheme() {
   const btn = document.getElementById('themeToggle');
@@ -100,17 +93,18 @@ function renderRelease(r, isLatest) {
     : r.prerelease
       ? '<span class="badge badge-accent">Beta</span>'
       : '';
+  const ICON = (name) => `<svg class="lucide" aria-hidden="true"><use href="#lucide-${name}"></use></svg>`;
   const btns = [];
   if (exe) {
     btns.push(
       `<a class="btn btn-primary btn-download" href="${escapeHtml(exe.browser_download_url)}">
-        <i data-lucide="download"></i>
+        ${ICON('download')}
         .exe installer
       </a>`
     );
   }
   if (msi) {
-    btns.push(`<a class="btn btn-ghost btn-download" href="${escapeHtml(msi.browser_download_url)}"><i data-lucide="package"></i>.msi package</a>`);
+    btns.push(`<a class="btn btn-ghost btn-download" href="${escapeHtml(msi.browser_download_url)}">${ICON('package')}.msi package</a>`);
   }
   const noAssets = btns.length === 0
     ? '<p class="release-notes">No Windows installer attached to this release.</p>'
@@ -141,7 +135,6 @@ function renderReleases(releases) {
   const list = withWindowsAssets(releases);
   if (list.length === 0) return;
   el.innerHTML = list.map((r, i) => renderRelease(r, i === 0)).join('');
-  initIcons(); // render the data-lucide icons inside the release buttons
 
   const badge = document.getElementById('latestBadge');
   if (badge) badge.textContent = 'Latest · ' + list[0].tag_name;
@@ -187,7 +180,6 @@ function initYear() {
 
 /* ---------- Boot ---------- */
 document.addEventListener('DOMContentLoaded', () => {
-  initIcons();
   initTheme();
   initReleases();
   initFaq();
