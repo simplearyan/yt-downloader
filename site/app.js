@@ -6,17 +6,17 @@
    ============================================================ */
 'use strict';
 
+/* ---------- Icons (local vendored lucide, from StudioPro) ---------- */
+function initIcons() {
+  try {
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+  } catch (e) { /* icons are decorative — never block on them */ }
+}
+
 /* ---------- Theme toggle ---------- */
-
-const SUN_ICON =
-  '<svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
-const MOON_ICON =
-  '<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
-
 function initTheme() {
   const btn = document.getElementById('themeToggle');
   if (!btn) return;
-  btn.innerHTML = SUN_ICON + MOON_ICON;
   const apply = (theme) => {
     document.documentElement.setAttribute('data-theme', theme);
     try { localStorage.setItem('ytdl-theme', theme); } catch (e) {}
@@ -26,6 +26,18 @@ function initTheme() {
   btn.addEventListener('click', () => {
     const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     apply(next);
+  });
+}
+
+/* Point the hero + header download buttons at the latest .exe, so clicking
+   them actually downloads the app. Falls back to scrolling to #downloads. */
+function wireDownloadButtons(releases) {
+  const latest = (releases || []).find((r) => (r.assets || []).some((a) => /\.exe$/i.test(a.name || '')));
+  if (!latest) return;
+  const exe = latest.assets.find((a) => /\.exe$/i.test(a.name || ''));
+  const btns = [document.getElementById('heroDownload'), document.getElementById('headerDownload')];
+  btns.forEach((b) => {
+    if (b) b.setAttribute('href', exe.browser_download_url);
   });
 }
 
@@ -92,13 +104,13 @@ function renderRelease(r, isLatest) {
   if (exe) {
     btns.push(
       `<a class="btn btn-primary btn-download" href="${escapeHtml(exe.browser_download_url)}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <i data-lucide="download"></i>
         .exe installer
       </a>`
     );
   }
   if (msi) {
-    btns.push(`<a class="btn btn-ghost btn-download" href="${escapeHtml(msi.browser_download_url)}">.msi package</a>`);
+    btns.push(`<a class="btn btn-ghost btn-download" href="${escapeHtml(msi.browser_download_url)}"><i data-lucide="package"></i>.msi package</a>`);
   }
   const noAssets = btns.length === 0
     ? '<p class="release-notes">No Windows installer attached to this release.</p>'
@@ -129,9 +141,12 @@ function renderReleases(releases) {
   const list = withWindowsAssets(releases);
   if (list.length === 0) return;
   el.innerHTML = list.map((r, i) => renderRelease(r, i === 0)).join('');
+  initIcons(); // render the data-lucide icons inside the release buttons
 
   const badge = document.getElementById('latestBadge');
   if (badge) badge.textContent = 'Latest · ' + list[0].tag_name;
+
+  wireDownloadButtons(list); // hero + header CTAs download the latest .exe
 }
 
 function renderError() {
@@ -172,6 +187,7 @@ function initYear() {
 
 /* ---------- Boot ---------- */
 document.addEventListener('DOMContentLoaded', () => {
+  initIcons();
   initTheme();
   initReleases();
   initFaq();

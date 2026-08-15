@@ -23,8 +23,9 @@
   <meta name="twitter:description" content="Download YouTube videos as original untouched streams with perfect seeking — free, open source, Windows." />
   <meta name="twitter:image" content="https://simplearyan.github.io/yt-downloader/assets/og-image.png" />
 
-  <meta name="theme-color" content="#17171a" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#0c0c0f" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#f7f7f9" media="(prefers-color-scheme: light)" />
+
   <script>
     // Apply theme before first paint to avoid a flash. Stored choice wins,
     // otherwise follow the OS preference. Defaults to dark (CapCut-style).
@@ -39,18 +40,19 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- Load the font stylesheet asynchronously so it doesn't block first paint -->
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
+  <!-- Load fonts asynchronously so they don't block first paint -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" /></noscript>
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/svg+xml" href="./assets/logo.svg" />
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+  <script src="./assets/lucide.min.js" defer></script>
 </head>
 <body>
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="#top">
-        <img class="brand-logo" src="./assets/logo.svg" alt="" width="32" height="32" />
+        <img class="brand-logo" src="./assets/logo.svg" alt="" width="30" height="30" />
         <span class="brand-name">YouTube<em>Downloader</em></span>
       </a>
       <nav class="header-nav" aria-label="Primary">
@@ -60,8 +62,9 @@
         <a href="#faq">FAQ</a>
       </nav>
       <div class="header-actions">
-        <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle light/dark mode" title="Toggle light/dark mode"></button>
-        <a class="btn btn-primary btn-sm" href="#downloads">Download</a>
+        <a class="icon-btn" href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener" aria-label="View source on GitHub" title="View source on GitHub"><i data-lucide="external-link"></i></a>
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle light/dark mode" title="Toggle light/dark mode"><i data-lucide="sun"></i><i data-lucide="moon"></i></button>
+        <a id="headerDownload" class="btn btn-primary btn-sm" href="#downloads"><i data-lucide="download"></i>Download</a>
       </div>
     </div>
   </header>
@@ -69,13 +72,14 @@
   <main id="top">
     <!-- Hero -->
     <section class="hero">
+      <div class="hero-bg" aria-hidden="true"></div>
       <div class="container hero-inner">
         <span class="badge badge-accent" id="latestBadge">Latest · v0.1.1-beta</span>
         <h1 class="hero-title">Download YouTube videos <span class="grad-text">the reliable way</span></h1>
         <p class="hero-sub">Original untouched streams with perfect seeking — no re-encoding, no broken files. Built for video editing.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary btn-lg" href="#downloads">Download for Windows</a>
-          <a class="btn btn-ghost btn-lg" href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener">View source</a>
+          <a id="heroDownload" class="btn btn-primary btn-lg" href="#downloads"><i data-lucide="download"></i>Download for Windows</a>
+          <a class="btn btn-ghost btn-lg" href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener"><i data-lucide="code"></i>View source</a>
         </div>
         <p class="hero-meta">Free &amp; open source · Built on yt-dlp · Windows 10/11</p>
       </div>
@@ -84,33 +88,26 @@
     <!-- Features -->
     <section class="section" id="features">
       <div class="container">
+        <p class="eyebrow">Features</p>
         <h2 class="section-title">Why use it</h2>
         <div class="features-grid">
           <article class="card feature">
-            <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>
-            </div>
+            <div class="feature-icon" aria-hidden="true"><i data-lucide="film"></i></div>
             <h3>Original quality</h3>
             <p>Downloads the untouched source streams straight from YouTube — no server-side re-encode, no quality loss.</p>
           </article>
           <article class="card feature">
-            <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
-            </div>
+            <div class="feature-icon" aria-hidden="true"><i data-lucide="monitor-play"></i></div>
             <h3>Editor-friendly</h3>
             <p>Perfect seek tables mean scrubbing, trimming, and previews just work in your video editor.</p>
           </article>
           <article class="card feature">
-            <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </div>
+            <div class="feature-icon" aria-hidden="true"><i data-lucide="shield-check"></i></div>
             <h3>Free &amp; open source</h3>
             <p>No subscriptions, no watermarks, no limits. The code is on GitHub for anyone to audit.</p>
           </article>
           <article class="card feature">
-            <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8l7-5 7 5M5 16l7 5 7-5"/></svg>
-            </div>
+            <div class="feature-icon" aria-hidden="true"><i data-lucide="layers"></i></div>
             <h3>Playlists &amp; formats</h3>
             <p>Playlists, subtitles, audio-only, or capped resolution — pick the exact format you need.</p>
           </article>
@@ -121,7 +118,8 @@
     <!-- Downloads -->
     <section class="section section-alt" id="downloads">
       <div class="container">
-        <h2 class="section-title">Download</h2>
+        <p class="eyebrow">Downloads</p>
+        <h2 class="section-title">Get the app</h2>
         <p class="section-sub">Windows 10/11 · NSIS installer (<code>.exe</code>) or MSI package (<code>.msi</code>)</p>
         <div id="releases" class="releases-list" aria-live="polite"></div>
       </div>
@@ -130,20 +128,21 @@
     <!-- How it works -->
     <section class="section" id="how">
       <div class="container">
-        <h2 class="section-title">How it works</h2>
+        <p class="eyebrow">How it works</p>
+        <h2 class="section-title">Three steps</h2>
         <div class="steps-grid">
           <article class="card step">
-            <span class="step-num">1</span>
+            <div class="step-icon" aria-hidden="true"><i data-lucide="download"></i></div>
             <h3>Install the app</h3>
             <p>Download the installer and open it — no dev server, no terminal, no setup.</p>
           </article>
           <article class="card step">
-            <span class="step-num">2</span>
+            <div class="step-icon" aria-hidden="true"><i data-lucide="link"></i></div>
             <h3>Paste a link</h3>
             <p>Drop in any YouTube video or playlist URL and let the app read it.</p>
           </article>
           <article class="card step">
-            <span class="step-num">3</span>
+            <div class="step-icon" aria-hidden="true"><i data-lucide="check"></i></div>
             <h3>Download</h3>
             <p>Original-quality MP4 lands in your downloads folder, ready for the editor.</p>
           </article>
@@ -154,26 +153,27 @@
     <!-- FAQ -->
     <section class="section section-alt" id="faq">
       <div class="container">
-        <h2 class="section-title">FAQ</h2>
+        <p class="eyebrow">FAQ</p>
+        <h2 class="section-title">Questions</h2>
         <div class="faq-list" id="faqList">
           <details class="card faq-item">
-            <summary>“Windows protected your PC” — what is that?</summary>
+            <summary><span>“Windows protected your PC” — what is that?</span><i data-lucide="chevron-down"></i></summary>
             <p>SmartScreen flags installers that aren't code-signed yet. It's the publisher that's unrecognized, not the app. Click <strong>More info → Run anyway</strong> to install. Code signing is on the roadmap — once it's live, the warning disappears.</p>
           </details>
           <details class="card faq-item">
-            <summary>Do I need yt-dlp or ffmpeg?</summary>
+            <summary><span>Do I need yt-dlp or ffmpeg?</span><i data-lucide="chevron-down"></i></summary>
             <p>Downloads are powered by <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">yt-dlp</a> and ffmpeg. When running from source, install them with <code>winget install yt-dlp</code> and <code>winget install ffmpeg</code>.</p>
           </details>
           <details class="card faq-item">
-            <summary>Is it really free?</summary>
+            <summary><span>Is it really free?</span><i data-lucide="chevron-down"></i></summary>
             <p>Yes — free and open source, forever. No account, no ads, no download limits.</p>
           </details>
           <details class="card faq-item">
-            <summary>Why not a web downloader like vidssave or y2mate?</summary>
+            <summary><span>Why not a web downloader like vidssave or y2mate?</span><i data-lucide="chevron-down"></i></summary>
             <p>Those re-encode videos on their servers with cheap settings that corrupt the seek table — files freeze and skip in editors. This app pulls the original streams, so seeking is perfect.</p>
           </details>
           <details class="card faq-item">
-            <summary>Which Windows versions are supported?</summary>
+            <summary><span>Which Windows versions are supported?</span><i data-lucide="chevron-down"></i></summary>
             <p>Windows 10 and 11 (64-bit). WebView2 — required by the app — is preinstalled on both.</p>
           </details>
         </div>
@@ -185,7 +185,7 @@
     <div class="container footer-inner">
       <span>© <span id="year">2026</span> YouTube Downloader</span>
       <nav class="footer-nav" aria-label="Footer">
-        <a href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/simplearyan/yt-downloader" target="_blank" rel="noopener"><i data-lucide="external-link"></i>GitHub</a>
         <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">Powered by yt-dlp</a>
       </nav>
     </div>
