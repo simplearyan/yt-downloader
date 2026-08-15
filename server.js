@@ -1,5 +1,5 @@
 const express = require('express');
-const { spawn, spawnSync } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -77,16 +77,110 @@ function cleanOldDownloads() {
 }
 setInterval(cleanOldDownloads, 30 * 60 * 1000); // every 30 min
 
+/** Run yt-dlp asynchronously, resolving with { stdout, stderr }. */
+function runYtDlp(args, { timeout = 30000, maxBuffer = 10 * 1024 * 1024 } = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(YT_DLP, args);
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
+
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      child.kill();
+      reject(new Error(`yt-dlp timed out after ${timeout}ms`));
+    }, timeout);
+
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+      if (stdout.length > maxBuffer) {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          child.kill();
+          reject(new Error('yt-dlp output exceeded maxBuffer'));
+        }
+      }
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    child.on('error', (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(err);
+    });
+    child.on('close', (code) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (code !== 0) {
+        const err = new Error(`yt-dlp exited with code ${code}`);
+        err.stderr = stderr;
+        reject(err);
+        return;
+      }
+      resolve({ stdout, stderr });
+    });
+  });
+}
+
+/** In-memory format cache — 30 min TTL, LRU eviction at 50 entries */
+const formatCache = new Map();
+const FORMAT_CACHE_TTL = 30 * 60 * 1000;
+const FORMAT_CACHE_MAX = 50;
+
+function formatCacheGet(url) {
+  const entry = formatCache.get(url);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > FORMAT_CACHE_TTL) {
+    formatCache.delete(url);
+    return null;
+  }
+  formatCache.delete(url); // touch -> move to end (LRU recency)
+  formatCache.set(url, entry);
+  return entry.data;
+}
+
+function formatCacheSet(url, data) {
+  formatCache.delete(url);
+  formatCache.set(url, { data, timestamp: Date.now() });
+  if (formatCache.size > FORMAT_CACHE_MAX) {
+    formatCache.delete(formatCache.keys().next().value); // evict oldest
+  }
+}
+
+/** In-flight dedupe — concurrent identical /api/info calls share one yt-dlp run */
+const inflightInfo = new Map();
+
 // ── Routes ──────────────────────────────────────────────────────────────────
 
-/** GET /api/info — fetch video metadata from yt-dlp */
+/** GET /api/info — fetch video metadata from yt-dlp (async, cached, deduped) */
 app.get('/api/info', async (req, res) => {
   const url = sanitizeUrl(req.query.url?.trim());
   if (!url || !isValidYouTubeUrl(url)) {
     return res.status(400).json({ error: 'Invalid YouTube URL. Please enter a valid YouTube URL.' });
   }
 
-  try {
+  // Cache hit -> instant repeat loads (including after a page refresh)
+  const cached = formatCacheGet(url);
+  if (cached) return res.json(cached);
+
+  // In-flight dedupe -> concurrent requests for the same URL share one yt-dlp run
+  const inflight = inflightInfo.get(url);
+  if (inflight) {
+    try {
+      return res.json(await inflight);
+    } catch {
+      return res.status(500).json({
+        error: 'Failed to fetch video info. The video might be private, age-restricted, or unavailable.',
+      });
+    }
+  }
+
+  const fetchPromise = (async () => {
     const args = [
       '--no-playlist',
       '--skip-download',
@@ -95,21 +189,13 @@ app.get('/api/info', async (req, res) => {
       url,
     ];
 
-    const result = spawnSync(YT_DLP, args, {
-      encoding: 'utf-8',
-      maxBuffer: 10 * 1024 * 1024, // 10 MB
+    const { stdout } = await runYtDlp(args, {
       timeout: 30000, // 30 seconds
+      maxBuffer: 10 * 1024 * 1024, // 10 MB
     });
 
-    if (result.error) throw result.error;
-    if (result.status !== 0) {
-      throw new Error(`yt-dlp exited with code ${result.status}`);
-    }
-
-    const raw = result.stdout;
-
     // yt-dlp --dump-json outputs one JSON line per video
-    const lines = raw.trim().split('\n');
+    const lines = stdout.trim().split('\n');
     const data = JSON.parse(lines[lines.length - 1]);
 
     // Build format list for the user to pick from
@@ -198,7 +284,7 @@ app.get('/api/info', async (req, res) => {
       },
     ];
 
-    res.json({
+    return {
       id: data.id,
       title: data.title,
       thumbnail: data.thumbnail,
@@ -208,12 +294,22 @@ app.get('/api/info', async (req, res) => {
       viewCount: data.view_count,
       formats,
       bestOptions,
-    });
+    };
+  })();
+
+  inflightInfo.set(url, fetchPromise);
+
+  try {
+    const response = await fetchPromise;
+    formatCacheSet(url, response);
+    res.json(response);
   } catch (err) {
     console.error('yt-dlp info error:', err.message);
     res.status(500).json({
       error: 'Failed to fetch video info. The video might be private, age-restricted, or unavailable.',
     });
+  } finally {
+    inflightInfo.delete(url);
   }
 });
 
@@ -280,7 +376,7 @@ app.get('/api/info/quick', async (req, res) => {
     // Fallback: try yt-dlp --print (slower but more complete)
     try {
       console.log('Falling back to yt-dlp --print for quick info...');
-      const result = spawnSync(YT_DLP, [
+      const { stdout } = await runYtDlp([
         '--no-playlist',
         '--skip-download',
         '--no-warnings',
@@ -293,15 +389,11 @@ app.get('/api/info/quick', async (req, res) => {
         '--print', 'uploader_url: %(uploader_url)s',
         url,
       ], {
-        encoding: 'utf-8',
-        maxBuffer: 1 * 1024 * 1024,
         timeout: 15000,
+        maxBuffer: 1 * 1024 * 1024,
       });
 
-      if (result.error) throw result.error;
-      if (result.status !== 0) throw new Error(`yt-dlp exited with code ${result.status}`);
-
-      const lines = result.stdout.trim().split('\n');
+      const lines = stdout.trim().split('\n');
       const info = {};
       for (const line of lines) {
         const idx = line.indexOf(': ');
