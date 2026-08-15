@@ -6,21 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>YouTube Downloader</title>
 
-  <!-- Google Fonts & Material Symbols -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..900&family=Google+Sans+Text:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <!-- Local system font stack (offline-safe) + inline Lucide icon sprite -->
 
   <link rel="stylesheet" href="/style.css" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" />
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><symbol id="lucide-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></symbol><symbol id="lucide-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></symbol><symbol id="lucide-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path></symbol><symbol id="lucide-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></symbol><symbol id="lucide-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></symbol><symbol id="lucide-refresh-cw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></symbol><symbol id="lucide-trash-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></symbol><symbol id="lucide-circle-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></symbol><symbol id="lucide-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></symbol><symbol id="lucide-file-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M12 18v-6"></path><path d="m9 15 3 3 3-3"></path></symbol><symbol id="lucide-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></symbol><symbol id="lucide-zap-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.768 5.111 13.44 2.44a1.5 1.5 0 0 1 2.474 1.561l-1.633 4.625"></path><path d="m18.889 13.232.672-.672A1.5 1.5 0 0 0 18.5 10h-2.844"></path><path d="m2 2 20 20"></path><path d="m7.94 7.94-3.5 3.499A1.5 1.5 0 0 0 5.5 14h4.002a.5.5 0 0 1 .471.666L8.086 20a1.5 1.5 0 0 0 2.475 1.56l5.5-5.5"></path></symbol><symbol id="lucide-circle-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></symbol></svg>
+
   <div id="app">
     <!-- Top App Bar -->
     <header class="app-bar">
       <div class="app-bar-content">
         <div class="app-bar-start">
-          <span class="material-symbols-outlined app-icon">download</span>
+          <svg class="lucide  app-icon" aria-hidden="true"><use href="#lucide-download"></use></svg>
           <div class="app-bar-titles">
             <h1 class="app-title">Downloader</h1>
             <span class="app-subtitle">YouTube</span>
@@ -28,10 +27,11 @@
         </div>
         <div class="app-bar-end">
           <button id="autoDownloadToggle" class="icon-btn" aria-label="Toggle auto-download" title="Auto-download is OFF">
-            <span class="material-symbols-outlined">flash_off</span>
+            <svg class="lucide" aria-hidden="true"><use href="#lucide-zap-off"></use></svg>
           </button>
           <button id="themeToggle" class="icon-btn" aria-label="Toggle theme" title="Toggle theme">
-            <span class="material-symbols-outlined">dark_mode</span>
+            <svg class="lucide icon-sun" aria-hidden="true"><use href="#lucide-sun"></use></svg>
+            <svg class="lucide icon-moon" aria-hidden="true"><use href="#lucide-moon"></use></svg>
           </button>
         </div>
       </div>
@@ -44,7 +44,7 @@
         <section class="card url-card" id="urlCard">
           <div class="card-content">
             <div class="input-wrapper input-wrapper-with-dropdown">
-              <span class="material-symbols-outlined input-icon">link</span>
+              <svg class="lucide  input-icon" aria-hidden="true"><use href="#lucide-link"></use></svg>
               <input
                 type="url"
                 id="urlInput"
@@ -54,7 +54,7 @@
                 spellcheck="false"
               />
               <button id="fetchBtn" class="btn btn-primary" disabled>
-                <span class="material-symbols-outlined">search</span>
+                <svg class="lucide" aria-hidden="true"><use href="#lucide-search"></use></svg>
                 <span class="btn-label">Get Info</span>
               </button>
               <div class="search-history" id="searchHistory"></div>
@@ -103,11 +103,11 @@
             </div>
             <div class="progress-actions">
               <button class="btn btn-primary" id="downloadBtn" style="display:none">
-                <span class="material-symbols-outlined">download</span>
+                <svg class="lucide" aria-hidden="true"><use href="#lucide-download"></use></svg>
                 <span class="btn-label">Save File</span>
               </button>
               <button class="btn btn-secondary" id="newDownloadBtn" style="display:none">
-                <span class="material-symbols-outlined">refresh</span>
+                <svg class="lucide" aria-hidden="true"><use href="#lucide-refresh-cw"></use></svg>
                 <span class="btn-label">New Download</span>
               </button>
             </div>
@@ -133,7 +133,7 @@
             <div class="history-header">
               <h3 class="card-title">History</h3>
               <button id="clearHistoryBtn" class="btn btn-text" title="Clear history">
-                <span class="material-symbols-outlined">delete_sweep</span>
+                <svg class="lucide" aria-hidden="true"><use href="#lucide-trash-2"></use></svg>
               </button>
             </div>
           </div>
@@ -146,14 +146,14 @@
         <section class="card error-card" id="errorCard" style="display:none">
           <div class="card-content">
             <div class="error-content">
-              <span class="material-symbols-outlined error-icon">error</span>
+              <svg class="lucide  error-icon" aria-hidden="true"><use href="#lucide-circle-alert"></use></svg>
               <div>
                 <p class="error-title">Something went wrong</p>
                 <p class="error-message" id="errorMessage"></p>
               </div>
             </div>
             <button id="retryBtn" class="btn btn-secondary">
-              <span class="material-symbols-outlined">refresh</span>
+              <svg class="lucide" aria-hidden="true"><use href="#lucide-refresh-cw"></use></svg>
               <span class="btn-label">Try Again</span>
             </button>
           </div>

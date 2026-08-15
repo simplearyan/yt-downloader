@@ -13,30 +13,30 @@
 
 /* ── CSS Custom Properties ─────────────────────────── */
 :root {
-  /* Dark theme (default) — deep layered surfaces */
-  --color-primary: #a8c7fa;
-  --color-on-primary: #0a1a2e;
-  --color-primary-container: #1a4a7a;
-  --color-on-primary-container: #d1e4ff;
-  --color-secondary: #bac8e0;
-  --color-on-secondary: #1a2a3a;
-  --color-secondary-container: #2a3a4a;
-  --color-on-secondary-container: #d6e4f7;
-  --color-tertiary: #d3bce8;
-  --color-on-tertiary: #2a1a3a;
-  --color-error: #ffb4ab;
-  --color-on-error: #5a0005;
-  --color-background: #0a0a0d;
-  --color-on-background: #e2e2e9;
-  --color-surface: #121216;
-  --color-on-surface: #e2e2e9;
-  --color-surface-variant: #2a2a32;
-  --color-on-surface-variant: #b8b8c4;
-  --color-outline: #6a6a76;
-  --color-outline-variant: #2a2a34;
-  --color-surface-container: #16161c;
-  --color-surface-container-high: #1e1e26;
-  --color-surface-container-highest: #282830;
+  /* CapCut-style dark theme (default) — deep charcoal, violet accent */
+  --color-primary: #8b6ffb;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #3a2a6e;
+  --color-on-primary-container: #e4dcff;
+  --color-secondary: #a9a5bd;
+  --color-on-secondary: #23202e;
+  --color-secondary-container: #322e40;
+  --color-on-secondary-container: #d8d4e6;
+  --color-tertiary: #b79df6;
+  --color-on-tertiary: #241a3e;
+  --color-error: #ff8f8f;
+  --color-on-error: #4a0d0d;
+  --color-background: #121216;
+  --color-on-background: #f2f2f6;
+  --color-surface: #181820;
+  --color-on-surface: #f2f2f6;
+  --color-surface-variant: #262631;
+  --color-on-surface-variant: #c4c4d2;
+  --color-outline: #6f6f80;
+  --color-outline-variant: #2c2c38;
+  --color-surface-container: #1d1d26;
+  --color-surface-container-high: #23232e;
+  --color-surface-container-highest: #2b2b38;
 
   --elevation-1: 0 1px 2px rgba(0,0,0,0.5);
   --elevation-2: 0 2px 6px rgba(0,0,0,0.5);
@@ -45,38 +45,38 @@
   --radius-sm: 12px;
   --radius-full: 9999px;
 
-  --font-body: 'Google Sans Text', 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'Google Sans Flex', 'Google Sans Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --transition: 180ms ease;
 }
 
-/* ── Light Theme ───────────────────────────────────── */
+/* ── CapCut-style Light Theme ──────────────────────── */
 [data-theme="light"] {
-  --color-primary: #1a6cff;
+  --color-primary: #6c4df6;
   --color-on-primary: #ffffff;
-  --color-primary-container: #d6e3ff;
-  --color-on-primary-container: #001b3e;
-  --color-secondary: #565f71;
+  --color-primary-container: #e9e4ff;
+  --color-on-primary-container: #2a1a6e;
+  --color-secondary: #5f5c70;
   --color-on-secondary: #ffffff;
-  --color-secondary-container: #dae2f9;
-  --color-on-secondary-container: #131c2b;
-  --color-tertiary: #6b5779;
+  --color-secondary-container: #e6e2f2;
+  --color-on-secondary-container: #211d33;
+  --color-tertiary: #6b4fd8;
   --color-on-tertiary: #ffffff;
-  --color-error: #c42828;
+  --color-error: #d03838;
   --color-on-error: #ffffff;
-  --color-error-container: #ffe0db;
-  --color-on-error-container: #3a0002;
-  --color-background: #f2f2f5;
-  --color-on-background: #1a1a1e;
+  --color-error-container: #ffe3e3;
+  --color-on-error-container: #4a0d0d;
+  --color-background: #f7f7fa;
+  --color-on-background: #1c1c22;
   --color-surface: #ffffff;
-  --color-on-surface: #1a1a1e;
-  --color-surface-variant: #e0e0e8;
-  --color-on-surface-variant: #4a4a54;
-  --color-outline: #8a8a94;
-  --color-outline-variant: #d0d0d8;
+  --color-on-surface: #1c1c22;
+  --color-surface-variant: #ececf2;
+  --color-on-surface-variant: #565660;
+  --color-outline: #94949f;
+  --color-outline-variant: #d9d9e2;
   --color-surface-container: #ffffff;
-  --color-surface-container-high: #f0f0f4;
-  --color-surface-container-highest: #e6e6ec;
+  --color-surface-container-high: #f1f1f6;
+  --color-surface-container-highest: #e7e7ee;
   --elevation-1: 0 1px 2px rgba(0,0,0,0.04);
   --elevation-2: 0 2px 6px rgba(0,0,0,0.06);
 }
@@ -131,7 +131,8 @@ body {
 }
 
 .app-icon {
-  font-size: 24px;
+  width: 24px;
+  height: 24px;
   color: var(--color-primary);
 }
 
@@ -185,9 +186,16 @@ body {
   gap: 4px;
 }
 
-.app-bar-end .icon-btn .material-symbols-outlined {
-  font-size: 20px;
+.app-bar .icon-btn .lucide {
+  width: 20px;
+  height: 20px;
 }
+
+/* Theme toggle: show the sun in dark mode (click → light), moon in light mode */
+[data-theme="dark"] .icon-sun { display: block; }
+[data-theme="dark"] .icon-moon { display: none; }
+[data-theme="light"] .icon-sun { display: none; }
+[data-theme="light"] .icon-moon { display: block; }
 
 /* ── Main ──────────────────────────────────────────── */
 .main-content {
@@ -254,7 +262,8 @@ body {
 
 .input-icon {
   color: var(--color-on-surface-variant);
-  font-size: 20px;
+  width: 20px;
+  height: 20px;
   margin-left: 8px;
   flex-shrink: 0;
 }
@@ -314,8 +323,10 @@ body {
   background: var(--color-surface-container-highest);
 }
 
-.btn .material-symbols-outlined {
-  font-size: 18px;
+.btn .lucide {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .input-hint {
@@ -673,9 +684,11 @@ body {
   flex-shrink: 0;
 }
 
-.search-history-item .material-symbols-outlined {
-  font-size: 16px;
+.search-history-item .lucide {
+  width: 16px;
+  height: 16px;
   color: var(--color-outline);
+  flex-shrink: 0;
 }
 
 /* ── Codec Sub-Tabs ───────────────────────────────── */
@@ -861,8 +874,9 @@ body {
   background: var(--color-surface-container-high);
 }
 
-.btn-text .material-symbols-outlined {
-  font-size: 18px;
+.btn-text .lucide {
+  width: 18px;
+  height: 18px;
 }
 
 .history-items {
@@ -956,8 +970,9 @@ body {
   background: color-mix(in srgb, var(--color-primary-container) 30%, transparent);
 }
 
-.history-reuse .material-symbols-outlined {
-  font-size: 16px;
+.history-reuse .lucide {
+  width: 16px;
+  height: 16px;
 }
 
 /* ── Error Card ────────────────────────────────────── */
@@ -970,7 +985,8 @@ body {
 
 .error-icon {
   color: var(--color-error);
-  font-size: 22px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
 }
 

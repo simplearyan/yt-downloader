@@ -82,8 +82,7 @@
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
-    const icon = el.themeToggle.querySelector('.material-symbols-outlined');
-    icon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+    // Icon swap is handled by CSS ([data-theme] shows sun in dark, moon in light)
   }
 
   function toggleTheme() {
@@ -208,7 +207,7 @@
           <div class="history-meta">${item.uploader || ''} &middot; ${formatTimeAgo(item.date)}</div>
         </div>
         <button class="history-reuse" data-url="${item.url || ''}" title="Download again">
-          <span class="material-symbols-outlined">refresh</span>
+          <svg class="lucide" aria-hidden="true"><use href="#lucide-refresh-cw"></use></svg>
         </button>
       `;
 
@@ -305,7 +304,7 @@
         <div class="search-history-item" data-url="${escapeHtml(s.url)}">
           ${hasThumb
             ? `<div class="history-thumb"><img src="${escapeHtml(s.thumbnail)}" alt="" loading="lazy" /></div>`
-            : `<span class="material-symbols-outlined" style="font-size:18px;color:var(--color-outline);flex-shrink:0">history</span>`
+            : `<svg class="lucide" style="width:18px;height:18px;color:var(--color-outline);flex-shrink:0" aria-hidden="true"><use href="#lucide-history"></use></svg>`
           }
           <span class="history-title">${escapeHtml(displayTitle)}</span>
           <span class="history-ext">${escapeHtml(formatTimeAgo(s.date))}</span>
@@ -386,8 +385,8 @@
   // ── Auto-Download Toggle ────────────────────────────
   function updateAutoDownloadUI() {
     if (el.autoDownloadToggle) {
-      const icon = el.autoDownloadToggle.querySelector('.material-symbols-outlined');
-      icon.textContent = state.autoDownload ? 'download_done' : 'download';
+      const use = el.autoDownloadToggle.querySelector('use');
+      if (use) use.setAttribute('href', state.autoDownload ? '#lucide-circle-check' : '#lucide-zap-off');
       el.autoDownloadToggle.title = state.autoDownload ? 'Auto-download is ON' : 'Auto-download is OFF';
       el.autoDownloadToggle.classList.toggle('active-toggle', state.autoDownload);
     }
@@ -612,7 +611,7 @@
     const downloadBtn = document.createElement('button');
     downloadBtn.className = 'btn btn-primary download-format-btn';
     downloadBtn.innerHTML = `
-      <span class="material-symbols-outlined">file_download</span>
+      <svg class="lucide" aria-hidden="true"><use href="#lucide-file-down"></use></svg>
       <span class="btn-label">Download</span>
     `;
     downloadBtn.addEventListener('click', startDownload);
@@ -709,7 +708,7 @@
           `).join('')}
         </div>
         <button class="btn btn-primary thumbnail-download-btn" id="thumbnailDownloadBtn">
-          <span class="material-symbols-outlined">image</span>
+          <svg class="lucide" aria-hidden="true"><use href="#lucide-image"></use></svg>
           <span class="btn-label">Download Thumbnail</span>
         </button>
       </div>
