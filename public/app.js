@@ -12,6 +12,10 @@
   const PREF_CODEC_FILTER = 'ytdl_pref_codec';
   const PREF_THUMBNAIL_QUALITY = 'ytdl_pref_thumb';
 
+  // ── App version + update source ────────────────────
+  const APP_VERSION = '0.9.0-alpha';
+  const REPO = 'simplearyan/yt-downloader';
+
   function loadPref(key, fallback) {
     try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback; } catch { return fallback; }
   }
@@ -69,6 +73,13 @@
     codecSubTabs: $('#codecSubTabs'),
     autoDownloadToggle: $('#autoDownloadToggle'),
     mainContent: $('.main-content'),
+    updateBtn: $('#updateBtn'),
+    updateModal: $('#updateModal'),
+    updateModalBody: $('#updateModalBody'),
+    updateModalFooter: $('#updateModalFooter'),
+    updateModalClose: $('#updateModalClose'),
+    updateNotNowBtn: $('#updateNotNowBtn'),
+    updateDownloadBtn: $('#updateDownloadBtn'),
   };
 
   // ── Theme ───────────────────────────────────────────
@@ -1016,9 +1027,101 @@
     triggerFileDownload(state.downloadId);
   });
 
-  // ── Keyboard Shortcut: Escape = reset ───────────────
+  // ── Update Check ──────────────────────────────────
+  function openUpdateModal() {
+    el.updateModal.style.display = 'flex';
+    el.updateModalBody.innerHTML =
+      '<div class="update-state">' +
+        '<div class="update-state-icon checking"><svg class="lucide" aria-hidden="true"><use href="#lucide-cloud-download"></use></svg></div>' +
+        '<div><div class="update-state-title">Checking for updates</div>' +
+        '<div class="update-state-desc">Looking for the latest release…</div></div>' +
+      '</div>';
+    el.updateModalFooter.style.display = 'none';
+  }
+
+  function closeUpdateModal() {
+    el.updateModal.style.display = 'none';
+  }
+
+  function renderUpdateState(state, latest) {
+    const body = el.updateModalBody;
+    let icon, title, desc, html = '';
+    if (state === 'available') {
+      const v = (latest.tag_name || '').replace(/^v/i, '');
+      icon = '<div class="update-state-icon available"><svg class="lucide" aria-hidden="true"><use href="#lucide-cloud-download"></use></svg></div>';
+      title = 'Update available';
+      desc = 'A new version is ready. You can grab it from GitHub or keep using the current build.';
+      html =
+        '<div class="update-state">' + icon +
+          '<div><div class="update-state-title">' + title + '</div>' +
+          '<div class="update-state-desc">' + desc + '</div>' +
+          '<div class="update-versions">' +
+            '<span class="update-version-pill">' + APP_VERSION + '</span>' +
+            '<span class="update-versions-arrow"><svg class="lucide" aria-hidden="true"><use href="#lucide-arrow-right"></use></svg></span>' +
+            '<span class="update-version-pill new">' + v + '</span>' +
+          '</div></div></div>';
+      el.updateModalFooter.style.display = 'flex';
+      el.updateNotNowBtn.style.display = '';
+      el.updateDownloadBtn.style.display = '';
+      el.updateDownloadBtn.href = latest.html_url || ('https://github.com/' + REPO + '/releases/latest');
+      el.updateDownloadBtn.target = '_blank';
+    } else if (state === 'uptodate') {
+      icon = '<div class="update-state-icon uptodate"><svg class="lucide" aria-hidden="true"><use href="#lucide-circle-check"></use></svg></div>';
+      title = 'You’re up to date';
+      desc = 'v' + APP_VERSION.replace(/^v/i, '') + ' is the latest available version.';
+      html = '<div class="update-state">' + icon + '<div><div class="update-state-title">' + title + '</div><div class="update-state-desc">' + desc + '</div></div></div>';
+      el.updateModalFooter.style.display = 'flex';
+      el.updateNotNowBtn.style.display = 'none';
+      el.updateDownloadBtn.style.display = 'none';
+    } else {
+      icon = '<div class="update-state-icon error"><svg class="lucide" aria-hidden="true"><use href="#lucide-circle-alert"></use></svg></div>';
+      title = 'Couldn’t check for updates';
+      desc = 'Make sure you’re online, then try again.';
+      html = '<div class="update-state">' + icon + '<div><div class="update-state-title">' + title + '</div><div class="update-state-desc">' + desc + '</div></div></div>';
+      el.updateModalFooter.style.display = 'flex';
+      el.updateNotNowBtn.style.display = 'none';
+      el.updateDownloadBtn.style.display = 'none';
+    }
+    body.innerHTML = html;
+  }
+
+  async function checkForUpdate() {
+    openUpdateModal();
+    try {
+      // /releases/latest 404s when every release is a prerelease, so use the
+      // list endpoint and take the newest non-draft release (prereleases included).
+      const res = await fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=1');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const list = await res.json();
+      const latest = Array.isArray(list) && list.length ? list[0] : null;
+      if (!latest || latest.draft) throw new Error('no release');
+      const latestV = (latest.tag_name || '').replace(/^v/i, '');
+      const curV = APP_VERSION.replace(/^v/i, '');
+      if (latestV && latestV !== curV) {
+        renderUpdateState('available', latest);
+      } else {
+        renderUpdateState('uptodate', latest);
+      }
+    } catch (err) {
+      renderUpdateState('error');
+    }
+  }
+
+  if (el.updateBtn) el.updateBtn.addEventListener('click', checkForUpdate);
+  if (el.updateModalClose) el.updateModalClose.addEventListener('click', closeUpdateModal);
+  if (el.updateNotNowBtn) el.updateNotNowBtn.addEventListener('click', closeUpdateModal);
+  el.updateModal.addEventListener('click', (e) => {
+    if (e.target === el.updateModal) closeUpdateModal();
+  });
+
+  // ── Keyboard Shortcut: Escape = reset / close modal ─
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !state.isDownloading) {
+    if (e.key !== 'Escape') return;
+    if (el.updateModal && el.updateModal.style.display !== 'none') {
+      closeUpdateModal();
+      return;
+    }
+    if (!state.isDownloading) {
       resetUI();
       show(el.urlCard);
       el.urlInput.focus();

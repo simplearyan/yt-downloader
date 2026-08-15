@@ -1053,6 +1053,177 @@ body {
   justify-content: center;
 }
 
+/* ── Update Modal ─────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elevation-2);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--color-on-surface-variant);
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.modal-close:hover {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface);
+}
+
+.modal-close .lucide {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.update-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.update-state-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.update-state-icon .lucide {
+  width: 20px;
+  height: 20px;
+}
+
+.update-state-icon.checking {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+
+.update-state-icon.available {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-primary);
+}
+
+.update-state-icon.uptodate {
+  background: color-mix(in srgb, #4caf50 14%, transparent);
+  color: #4caf50;
+}
+
+.update-state-icon.error {
+  background: color-mix(in srgb, var(--color-error) 14%, transparent);
+  color: var(--color-error);
+}
+
+.update-state-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.update-state-desc {
+  font-size: 12.5px;
+  color: var(--color-on-surface-variant);
+  margin-top: 3px;
+  line-height: 1.45;
+}
+
+.update-versions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.update-version-pill {
+  background: var(--color-surface-container-high);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-full);
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.update-version-pill.new {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  color: var(--color-primary);
+}
+
+.update-versions-arrow {
+  color: var(--color-outline);
+}
+
+.update-versions-arrow .lucide {
+  width: 14px;
+  height: 14px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--color-outline-variant);
+}
+
+.modal-footer .btn {
+  padding: 8px 18px;
+  font-size: 13px;
+  border-radius: var(--radius-full);
+}
+
+.modal-footer a.btn {
+  text-decoration: none;
+}
+
 /* ── Footer ────────────────────────────────────────── */
 .footer {
   background: var(--color-background);
