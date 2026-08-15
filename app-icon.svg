@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e2430"/>
+      <stop offset="1" stop-color="#0d1117"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="230" fill="url(#bg)"/>
+  <!-- play triangle -->
+  <path d="M 470 300 L 470 724 L 760 512 Z" fill="#ff2d3d"/>
+  <!-- download arrow -->
+  <path d="M 512 330 V 560 M 450 500 L 512 562 L 574 500" stroke="#ffffff" stroke-width="52" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

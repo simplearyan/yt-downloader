@@ -27,3 +27,6 @@ config.txt
 # OS files
 Thumbs.db
 .DS_Store
+
+# Tauri build output
+src-tauri/target/

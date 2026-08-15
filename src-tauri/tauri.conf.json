@@ -1,0 +1,39 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "YouTube Downloader",
+  "version": "0.9.0-alpha",
+  "identifier": "com.simplearyan.ytdl",
+  "build": {
+    "frontendDist": "../public",
+    "devUrl": "http://localhost:3001",
+    "beforeDevCommand": "set PORT=3001 && npm start"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "YouTube Downloader",
+        "width": 980,
+        "height": 760,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "android": {
+      "debugApplicationIdSuffix": ".debug"
+    }
+  }
+}
