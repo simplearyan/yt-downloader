@@ -181,6 +181,7 @@ jobs:
       # runtime API calls. Only runs for tag pushes.
       - name: Refresh download-site releases snapshot
         if: github.event_name == 'push'
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
