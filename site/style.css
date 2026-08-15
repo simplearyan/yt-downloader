@@ -293,48 +293,28 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
 
 .release-card {
   padding: 22px 24px;
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-areas:
-    "head"
-    "notes"
-    "actions";
-  row-gap: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.release-head { grid-area: head; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.release-version { font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
-.release-date { color: var(--muted); font-size: 12.5px; margin-left: auto; }
-
-.release-notes {
-  grid-area: notes;
-  color: var(--muted);
-  font-size: 13.5px;
-  line-height: 1.65;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
-.release-notes ul { margin: 0; padding-left: 15px; }
-.release-notes li + li { margin-top: 6px; }
-.release-notes code {
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
-  font-size: 0.92em;
-  padding: 1px 5px;
-  border-radius: 5px;
-  background: var(--accent-soft);
-  color: var(--accent-text);
-}
+.release-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.release-version { font-family: var(--font-display); font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+.release-date { color: var(--muted); font-size: 12.5px; }
 
 .release-actions {
-  grid-area: actions;
+  margin-left: auto;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
+}
+
+.release-empty {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 13.5px;
+  margin: 0;
 }
 
 /* CapCut-style flat action buttons: solid fill, small radius, no lift/gradient */
@@ -534,10 +514,10 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
   .hero-meta { font-size: 12.5px; line-height: 1.5; }
   .section-title { font-size: 26px; }
   .section { padding: 52px 0; }
-  /* Version cards: notes tighter, buttons stacked full-width without
-     wrapping to extra columns (flex-basis % misbehaves in column mode) */
-  .release-notes { font-size: 13px; }
-  .release-actions { flex-direction: column; width: 100%; flex-wrap: nowrap; }
+  /* Version cards: stack info above full-width buttons */
+  .release-card { flex-direction: column; align-items: stretch; gap: 14px; }
+  .release-head { justify-content: space-between; }
+  .release-actions { margin-left: 0; width: 100%; flex-direction: column; flex-wrap: nowrap; }
   .release-actions .btn { width: 100%; flex: 0 0 auto; }
   .faq-item summary { padding: 16px 18px; font-size: 14.5px; }
   .faq-item p { padding: 0 18px 16px; font-size: 14px; }

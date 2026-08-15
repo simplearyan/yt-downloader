@@ -67,22 +67,6 @@ function formatDate(iso) {
   }
 }
 
-/* Tiny markdown-lite for release notes: bullets, bold, inline code. Safe (escaped first). */
-function renderNotes(body) {
-  if (!body) return '';
-  const lines = escapeHtml(body)
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean);
-  const items = lines.map((l) => {
-    if (/^[-*•]\s+/.test(l)) return '<li>' + l.replace(/^[-*•]\s+/, '') + '</li>';
-    if (/^#+\s+/.test(l)) return '<li><strong>' + l.replace(/^#+\s+/, '') + '</strong></li>';
-    return '<li>' + l + '</li>';
-  });
-  return '<ul>' + items.join('') + '</ul>';
-}
 
 function renderRelease(r, isLatest) {
   const exe = (r.assets || []).find((a) => /\.exe$/i.test(a.name));
@@ -107,7 +91,7 @@ function renderRelease(r, isLatest) {
     btns.push(`<a class="btn btn-ghost btn-download" href="${escapeHtml(msi.browser_download_url)}">${ICON('package')}.msi package</a>`);
   }
   const noAssets = btns.length === 0
-    ? '<p class="release-notes">No Windows installer attached to this release.</p>'
+    ? '<p class="release-empty">No Windows installer attached to this release.</p>'
     : '';
 
   return `
@@ -117,7 +101,6 @@ function renderRelease(r, isLatest) {
         ${pill}
         <span class="release-date">${formatDate(r.published_at)}</span>
       </div>
-      <div class="release-notes">${renderNotes(r.body)}</div>
       ${noAssets}
       <div class="release-actions">${btns.join('')}</div>
     </article>`;
@@ -147,7 +130,7 @@ function renderError() {
   if (!el) return;
   el.innerHTML =
     '<div class="card release-card"><div class="release-head"><span class="release-version">Releases unavailable</span></div>' +
-    '<p class="release-notes">Could not load the latest releases right now. Check <a href="https://github.com/simplearyan/yt-downloader/releases" target="_blank" rel="noopener">GitHub Releases</a> directly.</p></div>';
+    '<p class="release-empty">Could not load the latest releases right now. Check <a href="https://github.com/simplearyan/yt-downloader/releases" target="_blank" rel="noopener">GitHub Releases</a> directly.</p></div>';
 }
 
 async function initReleases() {
