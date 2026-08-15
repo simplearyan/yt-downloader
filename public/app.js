@@ -22,7 +22,7 @@
   // In the packaged Tauri app the page is served from a tauri:// origin and the
   // backend runs as a local process on 127.0.0.1:3021; the web app talks to the
   // same origin it is served from.
-  const IS_TAURI = location.protocol.startsWith('tauri') || location.hostname.endsWith('.tauri.localhost');
+  const IS_TAURI = location.protocol.startsWith('tauri') || location.hostname === 'tauri.localhost' || location.hostname.endsWith('.tauri.localhost');
   const API_BASE = IS_TAURI ? 'http://127.0.0.1:3021' : '';
 
   function loadPref(key, fallback) {

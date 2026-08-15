@@ -44,6 +44,20 @@ pub fn run() {
     });
 }
 
+/// Build a `node` command that never opens a console window. The packaged app
+/// is a GUI process; spawning node.exe (a console app) without this flag would
+/// flash (probe) or keep open (backend) a CMD window.
+#[cfg(not(debug_assertions))]
+fn node_command() -> std::process::Command {
+  let mut cmd = std::process::Command::new("node");
+  #[cfg(windows)]
+  {
+    use std::os::windows::process::CommandExt;
+    cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+  }
+  cmd
+}
+
 /// Start the app backend. Preference: the Rust backend on :3021, with the
 /// bundled Node stopgap on :3022 backfilling routes that aren't ported yet.
 /// If the Rust server can't bind, fall back to Node directly on :3021.
@@ -52,7 +66,7 @@ pub fn run() {
 fn start_backend(app: &tauri::AppHandle) -> tauri::Result<()> {
   use std::sync::Mutex;
 
-  let node_ok = std::process::Command::new("node")
+  let node_ok = node_command()
     .arg("--version")
     .output()
     .map(|out| out.status.success())
@@ -85,9 +99,7 @@ fn start_backend(app: &tauri::AppHandle) -> tauri::Result<()> {
 /// Returns None (logged) if Node is missing or the spawn fails.
 #[cfg(not(debug_assertions))]
 fn spawn_node_backend(app: &tauri::AppHandle, port: u16) -> Option<std::process::Child> {
-  use std::process::Command;
-
-  let node_ok = Command::new("node")
+  let node_ok = node_command()
     .arg("--version")
     .output()
     .map(|out| out.status.success())
@@ -116,7 +128,7 @@ fn spawn_node_backend(app: &tauri::AppHandle, port: u16) -> Option<std::process:
     .join("downloads");
   std::fs::create_dir_all(&downloads_dir).ok();
 
-  match Command::new("node")
+  match node_command()
     .arg(&server_js)
     .env("PORT", port.to_string())
     .env("SERVE_STATIC", "0")
