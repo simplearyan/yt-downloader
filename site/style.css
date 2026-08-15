@@ -179,7 +179,7 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
 .header-inner { display: flex; align-items: center; gap: 22px; height: 60px; }
 
 .brand { display: inline-flex; align-items: center; color: var(--text); text-decoration: none !important; }
-.brand-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; color: var(--text); }
+.brand-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; color: var(--text); white-space: nowrap; }
 
 .header-nav { display: flex; gap: 26px; margin-left: 12px; }
 .header-nav a {
@@ -240,12 +240,7 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
   margin: 24px 0 18px;
   letter-spacing: -0.035em;
 }
-.grad-text {
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+.grad-text { color: var(--accent); }
 .hero-sub { font-size: clamp(16px, 2.2vw, 19px); color: var(--muted); max-width: 580px; margin: 0 0 34px; }
 .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
 .hero-meta { margin-top: 28px; font-size: 13.5px; color: var(--muted); }
@@ -285,13 +280,13 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
   width: 46px;
   height: 46px;
   border-radius: 13px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  background: var(--accent);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 18px;
-  box-shadow: 0 6px 16px var(--accent-soft);
+  box-shadow: none;
 }
 .feature-icon .lucide { width: 21px; height: 21px; }
 
@@ -301,37 +296,53 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
 .release-card {
   padding: 22px 24px;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr;
   grid-template-areas:
-    "head actions"
-    "notes notes";
-  column-gap: 20px;
-  row-gap: 2px;
-  align-items: center;
+    "head"
+    "notes"
+    "actions";
+  row-gap: 0;
 }
 
 .release-head { grid-area: head; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .release-version { font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
-.release-date { color: var(--muted); font-size: 12.5px; }
+.release-date { color: var(--muted); font-size: 12.5px; margin-left: auto; }
 
 .release-notes {
   grid-area: notes;
   color: var(--muted);
   font-size: 13.5px;
-  line-height: 1.55;
+  line-height: 1.65;
   margin-top: 14px;
-  padding-top: 13px;
+  padding-top: 14px;
   border-top: 1px solid var(--border);
 }
 .release-notes ul { margin: 0; padding-left: 15px; }
-.release-notes li + li { margin-top: 3px; }
+.release-notes li + li { margin-top: 6px; }
+.release-notes code {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: 0.92em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
 
-.release-actions { grid-area: actions; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.release-actions {
+  grid-area: actions;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
 
 /* CapCut-style flat action buttons: solid fill, small radius, no lift/gradient */
 .release-actions .btn {
   min-width: 0;
-  padding: 9px 16px;
+  padding: 10px 18px;
   font-size: 13.5px;
   border-radius: 10px;
   box-shadow: none;
@@ -362,17 +373,6 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
   background: var(--card);
 }
 
-@media (max-width: 640px) {
-  .release-card {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "head"
-      "notes"
-      "actions";
-  }
-  .release-actions { justify-content: flex-start; }
-}
-
 /* ---------- Steps ---------- */
 .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .step { padding: 34px 28px; text-align: center; }
@@ -387,8 +387,8 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
   align-items: center;
   justify-content: center;
   color: #fff;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: 0 8px 20px var(--accent-soft);
+  background: var(--accent);
+  box-shadow: none;
 }
 .step-icon .lucide { width: 23px; height: 23px; }
 
@@ -437,7 +437,30 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
 }
 
 @media (max-width: 520px) {
+  .container { padding: 0 16px; }
   .features-grid { grid-template-columns: 1fr; }
-  .release-card { padding: 22px; }
-  .release-actions .btn { flex: 1 1 100%; }
+  .release-card { padding: 20px; }
+  /* Header: keep the brand on one line, drop the redundant GitHub icon and
+     shrink the Download CTA to an icon-only square so nothing clips */
+  .header-inner { gap: 10px; }
+  .brand-name { font-size: 15px; }
+  .header-actions .icon-github { display: none; }
+  .header-actions .btn { width: 36px; height: 36px; padding: 0; justify-content: center; margin-left: 4px; }
+  .header-actions .btn .btn-label { display: none; }
+  .header-actions .btn .lucide { margin: 0; }
+  /* Hero: full-width CTAs, tighter type */
+  .hero { padding: 56px 0 48px; }
+  .hero-actions { flex-direction: column; width: 100%; max-width: 320px; }
+  .hero-actions .btn { width: 100%; }
+  .hero-meta { font-size: 12.5px; line-height: 1.5; }
+  .section-title { font-size: 26px; }
+  .section { padding: 52px 0; }
+  /* Version cards: notes tighter, buttons stacked full-width without
+     wrapping to extra columns (flex-basis % misbehaves in column mode) */
+  .release-notes { font-size: 13px; }
+  .release-actions { flex-direction: column; width: 100%; flex-wrap: nowrap; }
+  .release-actions .btn { width: 100%; flex: 0 0 auto; }
+  .faq-item summary { padding: 16px 18px; font-size: 14.5px; }
+  .faq-item p { padding: 0 18px 16px; font-size: 14px; }
+  .footer-inner { flex-direction: column; text-align: center; }
 }
