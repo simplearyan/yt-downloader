@@ -307,7 +307,7 @@ body {
 }
 
 .input-wrapper .btn-primary {
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary) 30%, transparent);
+  box-shadow: none;
 }
 
 .input-wrapper .btn-primary:disabled {
@@ -332,12 +332,13 @@ body {
 }
 
 .btn-primary {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--color-surface-container-high);
+  color: var(--color-on-background);
+  border: 1px solid var(--color-outline-variant);
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
+  background: var(--color-surface-container-highest);
 }
 
 .btn-primary:disabled {
