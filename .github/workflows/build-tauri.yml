@@ -67,23 +67,23 @@ jobs:
           if [[ "$REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
             VER="${REF_NAME#v}"
             VER="${VER%%-*}"
-            python - "$VER" <<'EOF'
-            import json, re, sys
-            ver = sys.argv[1]
-
-            with open('src-tauri/tauri.conf.json', 'r', encoding='utf-8') as f:
-                conf = json.load(f)
-            conf['version'] = ver
-            with open('src-tauri/tauri.conf.json', 'w', encoding='utf-8') as f:
-                json.dump(conf, f, indent=2, ensure_ascii=False)
-                f.write('\n')
-
-            with open('src-tauri/Cargo.toml', 'r', encoding='utf-8') as f:
-                cargo = f.read()
-            cargo = re.sub(r'^version\s*=\s*"[^"]*"', f'version = "{ver}"', cargo, count=1, flags=re.M)
-            with open('src-tauri/Cargo.toml', 'w', encoding='utf-8') as f:
-                f.write(cargo)
-            EOF
+            # NOTE: the heredoc delimiter (PY) must be flush-left after YAML
+            # block-scalar stripping, or bash never finds the terminator.
+            python - "$VER" <<'PY'
+          import json, re, sys
+          ver = sys.argv[1]
+          with open('src-tauri/tauri.conf.json', 'r', encoding='utf-8') as f:
+              conf = json.load(f)
+          conf['version'] = ver
+          with open('src-tauri/tauri.conf.json', 'w', encoding='utf-8') as f:
+              json.dump(conf, f, indent=2, ensure_ascii=False)
+              f.write('\n')
+          with open('src-tauri/Cargo.toml', 'r', encoding='utf-8') as f:
+              cargo = f.read()
+          cargo = re.sub(r'^version\s*=\s*"[^"]*"', f'version = "{ver}"', cargo, count=1, flags=re.M)
+          with open('src-tauri/Cargo.toml', 'w', encoding='utf-8') as f:
+              f.write(cargo)
+          PY
             echo "Synced version -> $VER"
           else
             echo "No version tag - keeping existing version"
