@@ -15,7 +15,8 @@ use axum::{
   routing::get,
   Router,
 };
-use futures_util::TryStreamExt;
+use futures_util::future::{BoxFuture, Shared};
+use futures_util::{FutureExt, TryStreamExt};
 use regex::Regex;
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -34,6 +35,10 @@ const OEMBED_TIMEOUT: Duration = Duration::from_secs(5);
 #[derive(Clone, Default)]
 pub struct BackendState {
   oembed_cache: Arc<Mutex<HashMap<String, (SystemTime, Value)>>>,
+  format_cache: Arc<Mutex<HashMap<String, (SystemTime, Value)>>>,
+  /// In-flight dedupe for /api/info - concurrent identical URLs share one
+  /// yt-dlp run via a cloneable shared future (server.js inflightInfo parity).
+  inflight_info: Arc<Mutex<HashMap<String, Shared<BoxFuture<'static, Result<Value, String>>>>>>,
   node_proxy_url: Arc<String>,
   node_available: Arc<AtomicBool>,
 }
@@ -108,6 +113,263 @@ fn cache_set(state: &BackendState, url: &str, value: Value) {
     .unwrap()
     .insert(url.to_string(), (SystemTime::now(), value));
 }
+// ---- Format cache (30-min TTL, LRU at 50) + helpers - server.js parity ----
+const FORMAT_CACHE_TTL: Duration = Duration::from_secs(30 * 60);
+const FORMAT_CACHE_MAX: usize = 50;
+
+fn format_cache_get(state: &BackendState, url: &str) -> Option<Value> {
+  let mut cache = state.format_cache.lock().unwrap();
+  if let Some((at, value)) = cache.get(url) {
+    if at.elapsed().ok() < Some(FORMAT_CACHE_TTL) {
+      let v = value.clone();
+      cache.remove(url); // touch -> move to end (LRU recency)
+      cache.insert(url.to_string(), (SystemTime::now(), v.clone()));
+      return Some(v);
+    }
+    cache.remove(url);
+  }
+  None
+}
+
+fn format_cache_set(state: &BackendState, url: &str, value: Value) {
+  let mut cache = state.format_cache.lock().unwrap();
+  cache.remove(url);
+  cache.insert(url.to_string(), (SystemTime::now(), value));
+  while cache.len() > FORMAT_CACHE_MAX {
+    match cache.keys().next().cloned() {
+      Some(oldest) => {
+        cache.remove(&oldest);
+      }
+      None => break,
+    }
+  }
+}
+
+fn jstr(v: &Value, key: &str) -> String {
+  v.get(key).and_then(|x| x.as_str()).unwrap_or("").to_string()
+}
+
+fn jint(v: &Value, key: &str) -> i64 {
+  v.get(key)
+    .and_then(|x| x.as_i64())
+    .or_else(|| v.get(key).and_then(|x| x.as_f64()).map(|f| f as i64))
+    .unwrap_or(0)
+}
+
+/// Map one yt-dlp format entry to the app's format shape (server.js parity).
+fn map_format(f: &Value) -> Value {
+  let vcodec = jstr(f, "vcodec");
+  let acodec = jstr(f, "acodec");
+  let vc = vcodec.to_lowercase();
+  let height = f.get("height").and_then(|x| x.as_f64()).unwrap_or(0.0) as i64;
+  let abr = f.get("abr").and_then(|x| x.as_f64()).unwrap_or(0.0);
+
+  let codec_category = if vc.starts_with("avc") || vc.starts_with("h.264") || vc.starts_with("x264") {
+    "H.264".to_string()
+  } else if vc.starts_with("vp9") {
+    "VP9".to_string()
+  } else if vc.starts_with("av01") {
+    "AV1".to_string()
+  } else if vc.starts_with("hev") || vc.starts_with("h.265") || vc.starts_with("x265") {
+    "H.265".to_string()
+  } else if vc.starts_with("vp8") {
+    "VP8".to_string()
+  } else if vcodec != "none" {
+    vcodec.split('.').next().unwrap_or("").to_uppercase()
+  } else {
+    String::new()
+  };
+
+  let quality = if height > 0 {
+    format!("{}p", height)
+  } else if abr > 0.0 {
+    format!("{}kbps", abr.round() as i64)
+  } else {
+    "audio only".to_string()
+  };
+
+  let filesize = f
+    .get("filesize")
+    .and_then(|x| x.as_u64())
+    .filter(|&v| v > 0)
+    .or_else(|| f.get("filesize_approx").and_then(|x| x.as_u64()).filter(|&v| v > 0))
+    .or_else(|| f.get("filesize").and_then(|x| x.as_f64()).map(|x| x as u64).filter(|&v| v > 0))
+    .or_else(|| {
+      f.get("filesize_approx")
+        .and_then(|x| x.as_f64())
+        .map(|x| x as u64)
+        .filter(|&v| v > 0)
+    })
+    .unwrap_or(0);
+
+  json!({
+    "formatId": jstr(f, "format_id"),
+    "ext": jstr(f, "ext"),
+    "quality": quality,
+    "vcodec": vcodec,
+    "acodec": acodec,
+    "codecCategory": codec_category,
+    "filesize": filesize,
+    "fps": jint(f, "fps"),
+    "hasVideo": vcodec != "none",
+    "hasAudio": acodec != "none",
+  })
+}
+
+/// Full yt-dlp `--dump-json` fetch, ported 1:1 from server.js /api/info
+/// (same args, format filtering, best-options, error message).
+async fn fetch_full_info(_state: BackendState, url: String) -> Result<Value, String> {
+  let output = tokio::time::timeout(
+    Duration::from_secs(30),
+    tokio::process::Command::new("yt-dlp")
+      .args(["--no-playlist", "--skip-download", "--dump-json", "--no-warnings", &url])
+      .output(),
+  )
+  .await
+  .map_err(|_| "yt-dlp timed out after 30000ms".to_string())?
+  .map_err(|e| format!("spawn yt-dlp: {e}"))?;
+
+  if !output.status.success() {
+    return Err(format!("yt-dlp exited with code {:?}", output.status.code()));
+  }
+  if output.stdout.len() > 10 * 1024 * 1024 {
+    return Err("yt-dlp output exceeded maxBuffer".to_string());
+  }
+
+  let stdout = String::from_utf8_lossy(&output.stdout);
+  let last_line = stdout.trim().lines().last().ok_or("yt-dlp produced no output")?;
+  let data: Value = serde_json::from_str(last_line).map_err(|e| format!("parse dump-json: {e}"))?;
+
+  let formats: Vec<Value> = data
+    .get("formats")
+    .and_then(|x| x.as_array())
+    .cloned()
+    .unwrap_or_default()
+    .into_iter()
+    .filter(|f| {
+      let vc = jstr(f, "vcodec");
+      let ac = jstr(f, "acodec");
+      vc != "none" || ac != "none"
+    })
+    .filter(|f| {
+      if jstr(f, "format_id").starts_with("sb") {
+        return false;
+      }
+      let h = f.get("height").and_then(|x| x.as_f64()).unwrap_or(0.0) as i64;
+      if h > 0 && h < 200 {
+        return false;
+      }
+      true
+    })
+    .map(|f| map_format(&f))
+    .filter(|f| {
+      f.get("hasVideo").and_then(|x| x.as_bool()).unwrap_or(false)
+        || f.get("hasAudio").and_then(|x| x.as_bool()).unwrap_or(false)
+    })
+    .collect();
+
+  let has_video = |f: &Value| f.get("hasVideo").and_then(|x| x.as_bool()).unwrap_or(false);
+  let has_audio = |f: &Value| f.get("hasAudio").and_then(|x| x.as_bool()).unwrap_or(false);
+  let video_formats: Vec<&Value> = formats.iter().filter(|f| has_video(f) && !has_audio(f)).collect();
+  let audio_formats: Vec<&Value> = formats.iter().filter(|f| has_audio(f) && !has_video(f)).collect();
+
+  let best_video_size = video_formats.iter().map(|f| jint(f, "filesize")).max().unwrap_or(0);
+  let best_h264_size = video_formats
+    .iter()
+    .filter(|f| jstr(f, "codecCategory") == "H.264")
+    .map(|f| jint(f, "filesize"))
+    .max()
+    .unwrap_or(0);
+  let best_audio_size = audio_formats.iter().map(|f| jint(f, "filesize")).max().unwrap_or(0);
+
+  Ok(json!({
+    "id": jstr(&data, "id"),
+    "title": jstr(&data, "title"),
+    "thumbnail": jstr(&data, "thumbnail"),
+    "duration": jint(&data, "duration"),
+    "uploader": jstr(&data, "uploader"),
+    "uploaderUrl": jstr(&data, "uploader_url"),
+    "viewCount": jint(&data, "view_count"),
+    "formats": formats,
+    "bestOptions": json!([
+      {
+        "label": "\u{1F3AC} Best Video + Audio (MP4)",
+        "formatId": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+        "ext": "mp4",
+        "quality": "Best",
+        "codecCategory": "",
+        "filesize": best_video_size + best_audio_size,
+        "hasVideo": true,
+        "hasAudio": true,
+        "isBest": true,
+      },
+      {
+        "label": "\u{1F3B5} H.264 Video + Audio (MP4)",
+        "formatId": "bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+        "ext": "mp4",
+        "quality": "H.264",
+        "codecCategory": "H.264",
+        "filesize": best_h264_size + best_audio_size,
+        "hasVideo": true,
+        "hasAudio": true,
+        "isBest": true,
+      },
+      {
+        "label": "\u{1F3B5} Best Audio Only (MP3)",
+        "formatId": "bestaudio/best",
+        "ext": "mp3",
+        "quality": "Best",
+        "codecCategory": "",
+        "filesize": best_audio_size,
+        "hasVideo": false,
+        "hasAudio": true,
+        "isBest": true,
+      },
+    ]),
+  }))
+}
+
+/// GET /api/info handler - cache -> in-flight dedupe -> shared yt-dlp run.
+async fn full_info(State(state): State<BackendState>, Query(params): Query<HashMap<String, String>>) -> Response {
+  let url = sanitize_url(&params.get("url").cloned().unwrap_or_default());
+  if url.trim().is_empty() || !is_valid_youtube_url(&url) {
+    return json_response(
+      StatusCode::BAD_REQUEST,
+      json!({ "error": "Invalid YouTube URL. Please enter a valid YouTube URL." }),
+    );
+  }
+
+  if let Some(cached) = format_cache_get(&state, &url) {
+    return json_response(StatusCode::OK, cached);
+  }
+
+  let shared = {
+    let mut map = state.inflight_info.lock().unwrap();
+    if let Some(existing) = map.get(&url) {
+      existing.clone()
+    } else {
+      let fut: BoxFuture<'static, Result<Value, String>> =
+        Box::pin(fetch_full_info(state.clone(), url.clone()));
+      let shared = fut.shared();
+      map.insert(url.clone(), shared.clone());
+      shared
+    }
+  };
+
+  let result = match shared.await {
+    Ok(v) => {
+      format_cache_set(&state, &url, v.clone());
+      json_response(StatusCode::OK, v)
+    }
+    Err(_) => json_response(
+      StatusCode::INTERNAL_SERVER_ERROR,
+      json!({ "error": "Failed to fetch video info. The video might be private, age-restricted, or unavailable." }),
+    ),
+  };
+  state.inflight_info.lock().unwrap().remove(&url);
+  result
+}
+
 
 // ── Helpers / handlers ─────────────────────────────────────────────────────
 fn json_response(status: StatusCode, value: Value) -> Response {
@@ -279,6 +541,7 @@ async fn cors(req: Request, next: Next) -> Response {
 
 pub fn router(state: BackendState) -> Router {
   Router::new()
+    .route("/api/info", get(full_info))
     .route("/api/info/quick", get(quick_info))
     .fallback(proxy)
     .layer(middleware::from_fn(cors))
@@ -350,4 +613,67 @@ mod tests {
     assert!(!j["title"].as_str().unwrap_or("").is_empty());
     assert!(j.get("error").is_none());
   }
+  /// Network test - real yt-dlp run. Run with:
+  /// `cargo test --release -- --ignored`
+  #[tokio::test]
+  #[ignore]
+  async fn full_info_serves_formats_with_cors() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let state = BackendState {
+      node_proxy_url: Arc::new("http://127.0.0.1:3022".to_string()),
+      node_available: Arc::new(AtomicBool::new(false)),
+      ..Default::default()
+    };
+    let app = router(state);
+    tokio::spawn(async move {
+      let _ = axum::serve(listener, app).await;
+    });
+
+    let client = reqwest::Client::new();
+    let resp = client
+      .get(format!(
+        "http://127.0.0.1:{port}/api/info?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DKOpTWx1Eou4"
+      ))
+      .send()
+      .await
+      .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.headers().get(header::ACCESS_CONTROL_ALLOW_ORIGIN).unwrap(), "*");
+    let j: Value = resp.json().await.unwrap();
+    assert_eq!(j["id"], "KOpTWx1Eou4");
+    assert_eq!(j["bestOptions"].as_array().map(|a| a.len()).unwrap_or(0), 3);
+    assert!(j["formats"].as_array().map(|a| a.len()).unwrap_or(0) > 0);
+    assert!(j.get("error").is_none());
+  }
+
+  /// Network test - sequential cache hit + concurrent requests both succeed.
+  #[tokio::test]
+  #[ignore]
+  async fn full_info_cache_and_concurrent_ok() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let app = router(BackendState::default());
+    tokio::spawn(async move {
+      let _ = axum::serve(listener, app).await;
+    });
+
+    let client = reqwest::Client::new();
+    let url = format!(
+      "http://127.0.0.1:{port}/api/info?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DKOpTWx1Eou4"
+    );
+
+    let first = client.get(&url).send().await.unwrap();
+    assert_eq!(first.status(), StatusCode::OK);
+
+    // Second sequential call - should hit the 30-min cache.
+    let second = client.get(&url).send().await.unwrap();
+    assert_eq!(second.status(), StatusCode::OK);
+
+    // Two concurrent calls - both succeed (cache hit or shared in-flight run).
+    let (a, b) = tokio::join!(client.get(&url).send(), client.get(&url).send());
+    assert_eq!(a.unwrap().status(), StatusCode::OK);
+    assert_eq!(b.unwrap().status(), StatusCode::OK);
+  }
 }
+

@@ -1,7 +1,7 @@
 # Packaged App Backend Plan — how to make the installed app actually download
 
 **Date:** 2026-08-15
-**Status:** In progress — Option C stopgap shipped (v0.2.1+); Option B Phase 0–1 done (Rust backend on :3021 with Node backfill)
+**Status:** In progress — Option C stopgap shipped (v0.2.1+); Option B Phase 0–2 done (Rust backend on :3021 with Node backfill for downloads/progress/file-serve)
 
 ---
 
@@ -144,6 +144,8 @@ All options share two small frontend/backend prerequisites (do them first):
 - `GET /api/info`: spawn `yt-dlp --dump-json`, parse with `serde_json`, port the
   format filtering/codec-category/best-options mapping 1:1 from `server.js`,
   keep the 30-min cache + in-flight dedupe.
+
+- **Status: DONE** (`src-tauri/src/backend.rs`). Same args, filters, codec categories, best-options, 30-min LRU cache, and in-flight dedupe via a shared future. Verified: `cargo check --release` + debug clean; live tests (`cargo test --release -- --ignored`) pass — real yt-dlp run returns the right id, 20 formats, 3 best options, CORS header; sequential cache hit + concurrent requests both OK. **Parity checked against Node**: identical id, 20 formats, 3 best options, and byte-equal first format entry.
 
 ### Phase 3 — Downloads + progress + file serve
 - `POST /api/download`: spawn yt-dlp with the exact same args/progress template,
