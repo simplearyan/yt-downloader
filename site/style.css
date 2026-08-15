@@ -217,19 +217,21 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
+  gap: 6px;
+  padding: 3px 10px;
   border-radius: 999px;
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 600;
+  line-height: 1;
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--muted);
+  white-space: nowrap;
 }
 .badge-accent { color: var(--accent-text); border-color: transparent; background: var(--accent-soft); }
 .badge-success { color: var(--success); border-color: transparent; background: var(--success-soft); }
-.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
 .hero-title {
   font-size: clamp(36px, 6.5vw, 62px);

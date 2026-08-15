@@ -36,6 +36,27 @@ jobs:
             "https://api.github.com/repos/simplearyan/yt-downloader/releases?per_page=20" \
             -o site/releases.json
 
+      # Also inline the same data into index.html so the version cards render
+      # on first paint (no async fetch flicker on refresh).
+      - name: Inline release snapshot into index.html
+        run: |
+          python3 - <<'PY'
+          import json, re
+          data = json.load(open('site/releases.json', encoding='utf-8'))
+          out = [{
+              'tag_name': r.get('tag_name'),
+              'name': r.get('name'),
+              'prerelease': r.get('prerelease'),
+              'published_at': r.get('published_at'),
+              'assets': [{'name': a.get('name'), 'browser_download_url': a.get('browser_download_url')} for a in r.get('assets', [])]
+          } for r in data]
+          s = json.dumps(out, separators=(',', ':'))
+          html = open('site/index.html', encoding='utf-8').read()
+          pat = re.compile(r'<script id="releases-data" type="application/json">.*?</script>', re.S)
+          html = pat.sub('<script id="releases-data" type="application/json">' + s + '</script>', html)
+          open('site/index.html', 'w', encoding='utf-8').write(html)
+          PY
+
       - name: Configure Pages
         uses: actions/configure-pages@v6
 

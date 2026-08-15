@@ -136,7 +136,13 @@ function renderError() {
 async function initReleases() {
   const el = document.getElementById('releases');
   if (!el) return;
+  // Render instantly from the snapshot inlined in the page (no flicker),
+  // then quietly re-fetch in the background in case it went stale.
   try {
+    const inline = document.getElementById('releases-data');
+    if (inline && inline.textContent.trim()) {
+      renderReleases(JSON.parse(inline.textContent));
+    }
     const snap = await fetchSnapshot();
     renderReleases(snap);
   } catch (e) {
