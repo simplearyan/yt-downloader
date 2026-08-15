@@ -14,7 +14,9 @@
   const PREF_FORMAT_FETCHED = 'ytdl_fetched_formats';
 
   // ── App version + update source ────────────────────
-  const APP_VERSION = '0.9.0-alpha';
+  // Real version comes from public/version.js (written by CI from the release
+  // tag); dev/source mode has no such file and falls back to a dev marker.
+  const APP_VERSION = (typeof window.YTDL_VERSION !== 'undefined' && window.YTDL_VERSION) || '0.0.0-dev';
   const REPO = 'simplearyan/yt-downloader';
 
   // In the packaged Tauri app the page is served from a tauri:// origin and the
@@ -1118,6 +1120,16 @@
       el.updateDownloadBtn.style.display = '';
       el.updateDownloadBtn.href = latest.html_url || ('https://github.com/' + REPO + '/releases/latest');
       el.updateDownloadBtn.target = '_blank';
+    } else if (state === 'dev') {
+      icon = '<div class="update-state-icon uptodate"><svg class="lucide" aria-hidden="true"><use href="#lucide-circle-check"></use></svg></div>';
+      title = 'Running a dev build';
+      desc = 'This instance runs from source, so version checks are skipped. Grab the latest release from GitHub.';
+      html = '<div class="update-state">' + icon + '<div><div class="update-state-title">' + title + '</div><div class="update-state-desc">' + desc + '</div></div></div>';
+      el.updateModalFooter.style.display = 'flex';
+      el.updateNotNowBtn.style.display = 'none';
+      el.updateDownloadBtn.style.display = '';
+      el.updateDownloadBtn.href = 'https://github.com/' + REPO + '/releases/latest';
+      el.updateDownloadBtn.target = '_blank';
     } else if (state === 'uptodate') {
       icon = '<div class="update-state-icon uptodate"><svg class="lucide" aria-hidden="true"><use href="#lucide-circle-check"></use></svg></div>';
       title = 'You’re up to date';
@@ -1138,8 +1150,38 @@
     body.innerHTML = html;
   }
 
+  // Minimal semver-ish comparison ("0.2.1-beta" vs "0.2.0-beta"). Returns
+  // 1 / 0 / -1: numeric MAJOR.MINOR.PATCH first; releases beat prereleases;
+  // then prerelease labels compare lexically (beta > alpha).
+  function compareVersions(a, b) {
+    const parse = (v) => {
+      const m = String(v || '').trim().match(/^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/);
+      return m ? { nums: [Number(m[1]), Number(m[2]), Number(m[3])], pre: m[4] || null } : null;
+    };
+    const pa = parse(a);
+    const pb = parse(b);
+    if (!pa && !pb) return 0;
+    if (!pa) return -1;
+    if (!pb) return 1;
+    for (let i = 0; i < 3; i++) {
+      if (pa.nums[i] !== pb.nums[i]) return pa.nums[i] > pb.nums[i] ? 1 : -1;
+    }
+    if (pa.pre === pb.pre) return 0;
+    if (!pa.pre) return 1; // release > prerelease
+    if (!pb.pre) return -1;
+    return pa.pre > pb.pre ? 1 : -1;
+  }
+
   async function checkForUpdate(silent) {
     if (!silent) openUpdateModal();
+
+    // Dev / source mode (no public/version.js): never claim releases exist.
+    if (APP_VERSION === '0.0.0-dev') {
+      hideUpdateDot();
+      if (!silent) renderUpdateState('dev');
+      return;
+    }
+
     try {
       // /releases/latest 404s when every release is a prerelease, so use the
       // list endpoint and take the newest non-draft release (prereleases included).
@@ -1150,7 +1192,9 @@
       if (!latest || latest.draft) throw new Error('no release');
       const latestV = (latest.tag_name || '').replace(/^v/i, '');
       const curV = APP_VERSION.replace(/^v/i, '');
-      const available = !!(latestV && latestV !== curV);
+      // Strictly-newer check — never offer a downgrade or equal version.
+      const canCompare = /^\d+\.\d+\.\d+/.test(latestV) && /^\d+\.\d+\.\d+/.test(curV);
+      const available = canCompare && compareVersions(latestV, curV) > 0;
       // Dot indicator reflects availability; modal only opens on manual click
       if (available) showUpdateDot();
       else hideUpdateDot();

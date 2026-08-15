@@ -85,6 +85,9 @@ jobs:
           with open('src-tauri/Cargo.toml', 'w', encoding='utf-8') as f:
               f.write(cargo)
           PY
+            # Frontend version — bundled into the app by tauri build
+            echo "window.YTDL_VERSION = '${REF_NAME#v}';" > public/version.js
+            echo "Wrote public/version.js -> ${REF_NAME#v}"
             echo "Synced version -> $VER"
           else
             echo "No version tag - keeping existing version"

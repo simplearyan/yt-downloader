@@ -34,3 +34,4 @@ src-tauri/target/
 
 # Packaged-app backend staging (built by prepare:backend)
 src-tauri/backend/
+public/version.js
