@@ -216,7 +216,6 @@
         e.stopPropagation();
         el.urlInput.value = item.url || '';
         state.url = item.url || '';
-        el.fetchBtn.disabled = false;
         el.urlInput.focus();
         fetchVideoInfo();
       });
@@ -327,7 +326,6 @@
         const url = item.dataset.url;
         el.urlInput.value = url;
         state.url = url;
-        el.fetchBtn.disabled = false;
         el.searchHistory.classList.remove('visible');
         el.urlInput.focus();
       });
@@ -341,7 +339,6 @@
   // ── URL Input with Search History ───────────────────
   el.urlInput.addEventListener('input', () => {
     state.url = el.urlInput.value.trim();
-    el.fetchBtn.disabled = !state.url;
     // Show filtered search history
     if (state.url) {
       renderSearchHistory(state.url);
@@ -358,9 +355,13 @@
   el.urlInput.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       el.searchHistory.classList.remove('visible');
-    } else if (e.key === 'Enter' && !el.fetchBtn.disabled) {
+    } else if (e.key === 'Enter') {
       el.searchHistory.classList.remove('visible');
-      fetchVideoInfo();
+      if (state.url) {
+        fetchVideoInfo();
+      } else {
+        nudgeEmptyInput();
+      }
     }
   });    // Hide search history when clicking outside
   document.addEventListener('click', (e) => {
@@ -371,15 +372,25 @@
   });
 
   el.fetchBtn.addEventListener('click', () => {
-    if (!state.isFetching) fetchVideoInfo();
+    if (state.isFetching) return;
+    if (state.url) {
+      fetchVideoInfo();
+    } else {
+      nudgeEmptyInput();
+    }
   });
+
+  // Nudge: open history + focus the input when the input is empty
+  function nudgeEmptyInput() {
+    renderSearchHistory('');
+    el.urlInput.focus();
+  }
   el.retryBtn.addEventListener('click', fetchVideoInfo);
   el.newDownloadBtn.addEventListener('click', () => {
     resetUI();
     show(el.urlCard);
     el.urlInput.focus();
     state.url = '';
-    el.fetchBtn.disabled = true;
   });
 
   // ── Auto-Download Toggle ────────────────────────────
@@ -436,7 +447,7 @@
     if (!state.url || state.isFetching) return;
 
     state.isFetching = true;
-    el.fetchBtn.disabled = true;
+    setFetchBtnLabel('Fetching…');
     resetUI();
     show(el.loadingCard);
 
@@ -522,8 +533,13 @@
       }
     } finally {
       state.isFetching = false;
-      el.fetchBtn.disabled = !el.urlInput.value.trim();
+      setFetchBtnLabel('Get Info');
     }
+  }
+
+  function setFetchBtnLabel(text) {
+    const label = el.fetchBtn.querySelector('.btn-label');
+    if (label) label.textContent = text;
   }
 
   // ── Format Loading Placeholder ───────────────────────

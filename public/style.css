@@ -159,11 +159,12 @@ body {
 .app-bar .icon-btn {
   background: none;
   border: none;
+  text-decoration: none;
   color: var(--color-on-surface-variant);
   width: 36px;
   height: 36px;
   border-radius: var(--radius-full);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -238,10 +239,7 @@ body {
 /* ── URL Input Card ────────────────────────────────── */
 .url-card {
   overflow: visible;
-}
-
-.url-card .card-content {
-  padding: 16px 24px;
+  width: 100%;
 }
 
 .input-wrapper {
@@ -249,22 +247,26 @@ body {
   align-items: center;
   gap: 8px;
   background: var(--color-surface-container-high);
-  border: 2px solid var(--color-outline-variant);
-  border-radius: var(--radius-xs);
-  padding: 4px;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-full);
+  padding: 5px 6px 5px 16px;
+  min-height: 54px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--elevation-1);
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
 }
 
 .input-wrapper:focus-within {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+  background: var(--color-surface-container);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent), var(--elevation-1);
 }
 
 .input-icon {
-  color: var(--color-on-surface-variant);
+  color: var(--color-primary);
+  opacity: 0.85;
   width: 20px;
   height: 20px;
-  margin-left: 8px;
+  margin-left: 2px;
   flex-shrink: 0;
 }
 
@@ -276,12 +278,34 @@ body {
   color: var(--color-on-surface);
   font-family: var(--font-body);
   font-size: 15px;
-  padding: 10px 4px;
+  padding: 12px 6px;
   min-width: 0;
 }
 
 .input::placeholder {
   color: var(--color-outline);
+}
+
+.input-wrapper .btn {
+  height: 44px;
+  padding: 0 24px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+/* Button icon hidden on desktop — text-only "Get Info" */
+.input-wrapper .btn .btn-search-icon {
+  display: none;
+}
+
+.input-wrapper .btn-primary {
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.input-wrapper .btn-primary:disabled {
+  box-shadow: none;
+  opacity: 0.85;
+  cursor: default;
 }
 
 .btn {
@@ -327,13 +351,6 @@ body {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-}
-
-.input-hint {
-  font-size: 12px;
-  color: var(--color-outline);
-  margin-top: 8px;
-  padding-left: 4px;
 }
 
 /* ── Loading Spinner ───────────────────────────────── */
@@ -1026,6 +1043,19 @@ body {
   text-decoration: underline;
 }
 
+.footer-repo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.footer-repo .lucide {
+  width: 14px;
+  height: 14px;
+}
+
 /* ── Responsive ────────────────────────────────────── */
 @media (max-width: 640px) {
   .app-bar-content {
@@ -1056,14 +1086,10 @@ body {
     padding: 16px 16px 0;
   }
 
-  .url-card .card-content {
-    padding: 12px 16px;
-  }
-
   .input-wrapper {
-    flex-direction: column;
     gap: 6px;
-    padding: 6px;
+    padding: 5px 6px 5px 12px;
+    border-radius: var(--radius-full);
   }
 
   .input-wrapper .input-icon {
@@ -1072,20 +1098,27 @@ body {
 
   .input {
     width: 100%;
-    padding: 10px 8px;
+    padding: 10px 4px;
     font-size: 16px; /* prevents iOS zoom */
   }
 
+  /* Icon-only search button on one row */
   .input-wrapper .btn {
-    width: 100%;
+    width: 44px;
+    padding: 0;
     justify-content: center;
-    padding: 10px;
+    height: 44px;
+    flex-shrink: 0;
   }
 
-  .input-hint {
-    font-size: 11px;
-    text-align: center;
-    padding-left: 0;
+  .input-wrapper .btn .btn-search-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+  }
+
+  .input-wrapper .btn .btn-label {
+    display: none;
   }
 
   .video-card-layout {
