@@ -30,3 +30,4 @@ Thumbs.db
 
 # Tauri build output
 src-tauri/target/
+.tmp/
