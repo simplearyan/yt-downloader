@@ -11,6 +11,7 @@
   const PREF_FORMAT_TAB = 'ytdl_pref_tab';
   const PREF_CODEC_FILTER = 'ytdl_pref_codec';
   const PREF_THUMBNAIL_QUALITY = 'ytdl_pref_thumb';
+  const PREF_FORMAT_FETCHED = 'ytdl_fetched_formats';
 
   // ── App version + update source ────────────────────
   const APP_VERSION = '0.9.0-alpha';
@@ -550,6 +551,9 @@
       });
       renderCurrentTab();
 
+      // Remember that a full format fetch succeeded (hides the first-fetch hint)
+      savePref(PREF_FORMAT_FETCHED, true);
+
       // Make sure everything is visible
       hide(el.loadingCard);
       show(el.videoCard, el.formatCard);
@@ -573,10 +577,12 @@
 
   // ── Format Loading Placeholder ───────────────────────
   function showFormatLoading() {
+    const firstFetch = !loadPref(PREF_FORMAT_FETCHED, false);
     el.formatOptions.innerHTML = `
       <div class="format-loading">
         <div class="spinner" style="width:24px;height:24px;margin:0 auto 10px;border-width:2px"></div>
         <p class="format-loading-text">Loading format options…</p>
+        ${firstFetch ? '<p class="format-loading-hint">First fetch can take a few seconds…</p>' : ''}
       </div>
     `;
     show(el.formatCard);

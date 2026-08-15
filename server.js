@@ -669,4 +669,23 @@ app.get('*', (req, res) => {
 // ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`🎬 YouTube Downloader running at http://localhost:${PORT}`);
+  warmUpYtDlp();
 });
+
+/** Fire-and-forget yt-dlp warm-up — primes Python/Defender/DNS/TLS/player
+ *  caches so the first real format fetch after server start is fast.
+ *  Never fatal: failures are swallowed. Set YT_DLP_WARMUP=0 to disable,
+ *  or YT_DLP_WARMUP_URL to choose the warm-up video. */
+function warmUpYtDlp() {
+  if (process.env.YT_DLP_WARMUP === '0') return;
+  const boot = spawn(YT_DLP, ['--version']);
+  boot.on('error', () => { /* yt-dlp not installed — warm-up is optional */ });
+  boot.on('close', () => {
+    const warmUrl = process.env.YT_DLP_WARMUP_URL || 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
+    console.log('⏳ Warming up yt-dlp in the background…');
+    runYtDlp(['--no-playlist', '--skip-download', '--dump-json', '--no-warnings', warmUrl], {
+      timeout: 30000,
+      maxBuffer: 5 * 1024 * 1024,
+    }).catch(() => { /* warm-up failures are non-fatal */ });
+  });
+}
