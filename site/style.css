@@ -21,7 +21,6 @@
   --success: #179a6a;
   --success-soft: rgba(23, 154, 106, 0.12);
   --header-bg: rgba(247, 247, 249, 0.82);
-  --shadow: 0 1px 2px rgba(24, 20, 60, 0.04), 0 10px 30px rgba(24, 20, 60, 0.07);
   --hero-glow: radial-gradient(60% 50% at 75% 0%, rgba(108, 77, 246, 0.16), transparent 70%);
   --grid-line: rgba(20, 16, 60, 0.05);
   --radius: 18px;
@@ -46,7 +45,6 @@
   --success: #34d399;
   --success-soft: rgba(52, 211, 153, 0.14);
   --header-bg: rgba(12, 12, 15, 0.8);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 34px rgba(0, 0, 0, 0.4);
   --hero-glow: radial-gradient(55% 45% at 72% 0%, rgba(139, 111, 251, 0.22), transparent 70%);
   --grid-line: rgba(255, 255, 255, 0.045);
 }
@@ -266,7 +264,7 @@ i.lucide, .btn .lucide, .footer-nav .lucide { pointer-events: none; }
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: none;
   transition: border-color 0.18s ease;
 }
 .card:hover { border-color: var(--border-strong); }
