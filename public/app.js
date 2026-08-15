@@ -550,7 +550,7 @@
       }
     } finally {
       state.isFetching = false;
-      setFetchBtnLabel('Get Info');
+      setFetchBtnLabel('Search');
     }
   }
 
