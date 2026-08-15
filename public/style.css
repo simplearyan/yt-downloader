@@ -26,6 +26,8 @@
   --color-on-tertiary: #241a3e;
   --color-error: #ff8f8f;
   --color-on-error: #4a0d0d;
+  --color-primary-strong: var(--color-primary);
+  --color-error-strong: var(--color-error);
   --color-background: #242424;
   --color-on-background: #efefef;
   --color-surface: #2a2a2a;
@@ -66,6 +68,8 @@
   --color-on-error: #ffffff;
   --color-error-container: #ffe3e3;
   --color-on-error-container: #4a0d0d;
+  --color-primary-strong: #5d43df;
+  --color-error-strong: #b3261e;
   --color-background: #f7f7fa;
   --color-on-background: #1c1c22;
   --color-surface: #ffffff;
@@ -174,7 +178,7 @@ body {
 }
 
 .app-bar .icon-btn.active-toggle {
-  color: var(--color-primary);
+  color: var(--color-primary-strong);
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
@@ -358,7 +362,7 @@ body {
 }
 
 .btn-primary:disabled {
-  opacity: 0.3;
+  opacity: 0.85;
   cursor: not-allowed;
 }
 
@@ -370,6 +374,7 @@ body {
 
 .btn-secondary:hover {
   background: var(--color-surface-container-highest);
+  color: var(--color-primary-strong);
 }
 
 .btn .lucide {
@@ -687,7 +692,7 @@ body {
 }
 
 .search-history-clear:hover {
-  color: var(--color-error);
+  color: var(--color-error-strong);
   background: color-mix(in srgb, var(--color-error) 10%, transparent);
 }
 
@@ -780,7 +785,7 @@ body {
 
 .codec-sub-tab.active {
   background: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  color: var(--color-primary);
+  color: var(--color-primary-strong);
   border-color: var(--color-primary);
 }
 
@@ -1164,7 +1169,7 @@ body {
 
 .update-state-icon.available {
   background: color-mix(in srgb, var(--color-primary) 14%, transparent);
-  color: var(--color-primary);
+  color: var(--color-primary-strong);
 }
 
 .update-state-icon.uptodate {
@@ -1210,7 +1215,7 @@ body {
 .update-version-pill.new {
   background: color-mix(in srgb, var(--color-primary) 14%, transparent);
   border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
-  color: var(--color-primary);
+  color: var(--color-primary-strong);
 }
 
 .update-versions-arrow {

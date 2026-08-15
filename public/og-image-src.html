@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>og-image source (1080x1920)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+    background: #242424;
+    color: #efefef;
+    display: flex;
+    flex-direction: column;
+    padding: 96px 88px 72px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* subtle violet glow, kept low-opacity and clean */
+  .glow {
+    position: absolute;
+    top: -300px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1000px;
+    height: 1000px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(183, 157, 246, 0.15), transparent 72%);
+    pointer-events: none;
+  }
+
+  .mark {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+  .mark-chip {
+    width: 88px;
+    height: 88px;
+    border-radius: 26px;
+    background: #323232;
+    border: 2px solid #383838;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b79df6;
+  }
+  .mark-chip svg { width: 44px; height: 44px; }
+  .mark-name {
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    color: #c4c4c4;
+  }
+
+  main { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 44px; }
+
+  h1 {
+    font-size: 148px;
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -3px;
+    color: #efefef;
+  }
+  h1 .accent { color: #b79df6; }
+
+  .tagline {
+    font-size: 44px;
+    font-weight: 400;
+    color: #c4c4c4;
+    letter-spacing: 0.2px;
+  }
+
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    margin-top: 20px;
+  }
+  .feat {
+    display: flex;
+    align-items: center;
+    gap: 34px;
+    background: #2c2c2c;
+    border: 2px solid #383838;
+    border-radius: 30px;
+    padding: 40px 44px;
+  }
+  .feat-icon {
+    width: 84px;
+    height: 84px;
+    flex: none;
+    border-radius: 24px;
+    background: #323232;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b79df6;
+  }
+  .feat-icon svg { width: 42px; height: 42px; }
+  .feat b {
+    display: block;
+    font-size: 42px;
+    font-weight: 700;
+    color: #efefef;
+    letter-spacing: -0.4px;
+  }
+  .feat span {
+    display: block;
+    font-size: 30px;
+    color: #c4c4c4;
+    margin-top: 6px;
+  }
+
+  footer {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: #707070;
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  footer svg { width: 32px; height: 32px; color: #707070; }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+
+  <div class="mark">
+    <div class="mark-chip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path>
+      </svg>
+    </div>
+    <span class="mark-name">simplearyan/yt-downloader</span>
+  </div>
+
+  <main>
+    <h1>YouTube<br /><span class="accent">Downloader</span></h1>
+    <p class="tagline">Paste any link. Pick a format. Download free.</p>
+
+    <div class="features">
+      <div class="feat">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+        <div><b>MP3 &amp; MP4</b><span>Audio or video — your choice</span></div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path>
+          </svg>
+        </div>
+        <div><b>Free · No ads</b><span>No sign-up, no limits</span></div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path>
+          </svg>
+        </div>
+        <div><b>Works offline</b><span>Desktop app — no server needed</span></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path>
+    </svg>
+    simplearyan/yt-downloader
+  </footer>
+</body>
+</html>
